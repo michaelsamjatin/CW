@@ -18,6 +18,11 @@ except ImportError:
     # Fallback for systems without tkinterdnd2
     DND_AVAILABLE = False
     print("Warning: Drag and drop functionality not available")
+    # Create dummy classes for build compatibility
+    class TkinterDnD:
+        class Tk(tk.Tk):
+            pass
+    DND_FILES = None
 
 class CSVFormatterApp:
     def __init__(self):

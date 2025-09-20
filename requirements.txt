@@ -1,8 +1,9 @@
 # Cross-platform base requirements
-pandas>=1.5.0
-numpy>=1.21.0
+pandas>=1.5.0,<2.1.0
+numpy>=1.21.0,<1.25.0
 tkinterdnd2>=0.4.0
 
 # Platform-specific build tools - install based on your OS:
-# Windows: pip install -r requirements-windows.txt  
+# Windows: pip install -r requirements-windows.txt
 # macOS: pip install -r requirements-macos.txt
+# Linux: pip install -r requirements-linux.txt

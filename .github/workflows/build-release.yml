@@ -17,12 +17,16 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.10'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-windows.txt
+
+    - name: Test build requirements
+      run: |
+        python test_build.py
 
     - name: Build Windows executable
       run: |
@@ -51,12 +55,16 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.10'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-macos.txt
+
+    - name: Test build requirements
+      run: |
+        python test_build.py
 
     - name: Build macOS app
       run: |
@@ -91,20 +99,32 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.10'
 
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3-tk
+        sudo apt-get install -y python3-tk python3-dev build-essential
 
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements-linux.txt
+        # Install requirements with fallback for problematic packages
+        pip install pandas>=1.5.0,\<2.1.0 numpy>=1.21.0,\<1.25.0 pyinstaller>=5.7.0
+        pip install tkinterdnd2>=0.4.0 || echo "tkinterdnd2 install failed, continuing..."
+
+    - name: Test build requirements
+      run: |
+        python test_build.py
 
     - name: Build Linux executable
       run: |
+        # Set display for headless build
+        export DISPLAY=:99
+        # Start a virtual display for GUI testing
+        sudo apt-get install -y xvfb
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+
         pyinstaller --onefile --windowed --name "Realisierungsdatenvisualizer" --add-data "realisierungsdaten.html:." --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy csv_formatter_gui.py
         # Verify the executable was created
         if [ -f "dist/Realisierungsdatenvisualizer" ]; then

@@ -1,10 +1,7 @@
 # Linux requirements
-pandas>=1.5.0
-numpy>=1.21.0
+pandas>=1.5.0,<2.1.0
+numpy>=1.21.0,<1.25.0
 tkinterdnd2>=0.4.0
-
-# Linux-specific GUI dependencies
-python3-tk
 
 # For building executables on Linux
 pyinstaller>=5.7.0
