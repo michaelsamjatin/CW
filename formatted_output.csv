@@ -1,10 +1,10 @@
-﻿WoVi_CW_Formatted_2025-09-03;;;;;;;;;;
+﻿WoVi_CW_Formatted_2025-09-20;;;;;;;;;;
 ;;;;;;;;;;
 Fundraiser ID;Fundraiser Name;Calendar week;Public RefID;Age;Interval;Amount Yearly;status_agency;points;bonus_status
 00011;Charly Büchling;18/2025;330000203.0;26.0;Monthly;360.0;approved;0,5;
 00011;Charly Büchling;18/2025;330000205.0;44.0;Monthly;360.0;approved;4,0;
 00011;Charly Büchling;18/2025;330000206.0;21.0;Monthly;360.0;conditionally-approved;0,5;
-;;;;;;;;Total: 5.0;not-eligible
+;;;;;;;;Total: 5.0;eligible
 00005;Linus Möller;18/2025;330000202.0;22.0;Monthly;360.0;approved;0,5;
 00005;Linus Möller;18/2025;330000209.0;28.0;Monthly;360.0;approved;0,5;
 00005;Linus Möller;18/2025;330000210.0;34.0;Monthly;360.0;approved;3,0;
@@ -21,7 +21,7 @@ Fundraiser ID;Fundraiser Name;Calendar week;Public RefID;Age;Interval;Amount Yea
 00011;Charly Büchling;19/2025;330000222.0;28.0;Monthly;360.0;approved;0,5;
 00011;Charly Büchling;19/2025;330000215.0;26.0;Monthly;360.0;cancelled;0,5;
 00011;Charly Büchling;19/2025;330000223.0;38.0;Monthly;360.0;approved;3,0;
-;;;;;;;;Total: 11.5;not-eligible
+;;;;;;;;Total: 11.5;eligible
 00010;Jaime Dos Santos Mendes;19/2025;330000217.0;46.0;Monthly;360.0;approved;4,0;
 00010;Jaime Dos Santos Mendes;19/2025;330000224.0;28.0;Monthly;360.0;approved;0,5;
 00010;Jaime Dos Santos Mendes;19/2025;330000225.0;31.0;Monthly;360.0;approved;3,0;
@@ -52,12 +52,12 @@ Fundraiser ID;Fundraiser Name;Calendar week;Public RefID;Age;Interval;Amount Yea
 00017;Joshua Carstens;20/2025;330000244.0;37.0;Monthly;360.0;cancelled;3,0;
 00017;Joshua Carstens;20/2025;330000241.0;29.0;Monthly;360.0;approved;0,5;
 00017;Joshua Carstens;20/2025;330000243.0;28.0;Monthly;360.0;cancelled;0,5;
-;;;;;;;;Total: 8.0;not-eligible
+;;;;;;;;Total: 8.0;eligible
 00020;Killian Nash-Gavilán;21/2025;330000249.0;27.0;Monthly;360.0;cancelled;0,5;
 00020;Killian Nash-Gavilán;21/2025;330000254.0;22.0;Monthly;360.0;approved;0,5;
 00020;Killian Nash-Gavilán;21/2025;330000250.0;26.0;Half-Yearly;360.0;approved;1,0;
 00020;Killian Nash-Gavilán;21/2025;330000256.0;65.0;Monthly;360.0;cancelled;4,0;
-;;;;;;;;Total: 6.0;not-eligible
+;;;;;;;;Total: 6.0;eligible
 00001;Luna Fenner;21/2025;330000248.0;29.0;Monthly;360.0;approved;0,5;
 00001;Luna Fenner;21/2025;330000251.0;39.0;Monthly;360.0;approved;3,0;
 00001;Luna Fenner;21/2025;330000253.0;31.0;Monthly;360.0;approved;3,0;
@@ -68,21 +68,21 @@ Fundraiser ID;Fundraiser Name;Calendar week;Public RefID;Age;Interval;Amount Yea
 00012;Tara Deuchler;21/2025;330000252.0;28.0;Monthly;360.0;approved;0,5;
 00012;Tara Deuchler;21/2025;330000255.0;72.0;Monthly;360.0;approved;4,0;
 00012;Tara Deuchler;21/2025;330000257.0;46.0;Monthly;360.0;approved;4,0;
-00012;Tara Deuchler;21/2025;330000258.0;51.0;Half-Yearly;360.0;approved;5,0;
-;;;;;;;;Total: 13.5;eligible
+00012;Tara Deuchler;21/2025;330000258.0;51.0;Half-Yearly;360.0;approved;6,0;
+;;;;;;;;Total: 14.5;eligible
 00020;Killian Nash-Gavilán;22/2025;330000269.0;47.0;Monthly;360.0;approved;4,0;
 00020;Killian Nash-Gavilán;22/2025;330000271.0;26.0;Monthly;360.0;approved;0,5;
 00020;Killian Nash-Gavilán;22/2025;330000274.0;42.0;Monthly;360.0;approved;4,0;
 00020;Killian Nash-Gavilán;22/2025;330000275.0;29.0;Monthly;360.0;cancelled;0,5;
 00020;Killian Nash-Gavilán;22/2025;330000277.0;56.0;Monthly;360.0;approved;4,0;
 00020;Killian Nash-Gavilán;22/2025;330000279.0;22.0;Monthly;360.0;cancelled;0,5;
-00020;Killian Nash-Gavilán;22/2025;330000263.0;40.0;Monthly;360.0;approved;4,0;
+00020;Killian Nash-Gavilán;22/2025;330000263.0;40.0;Monthly;360.0;approved;3,0;
 00020;Killian Nash-Gavilán;22/2025;330000267.0;56.0;Yearly;360.0;cancelled;6,0;
-;;;;;;;;Total: 23.5;not-eligible
-00001;Luna Fenner;22/2025;330000261.0;65.0;Half-Yearly;360.0;approved;5,0;
-00001;Luna Fenner;22/2025;330000270.0;56.0;Half-Yearly;360.0;approved;5,0;
+;;;;;;;;Total: 22.5;eligible
+00001;Luna Fenner;22/2025;330000261.0;65.0;Half-Yearly;360.0;approved;6,0;
+00001;Luna Fenner;22/2025;330000270.0;56.0;Half-Yearly;360.0;approved;6,0;
 00001;Luna Fenner;22/2025;330000264.0;44.0;Yearly;360.0;approved;6,0;
-;;;;;;;;Total: 16.0;eligible
+;;;;;;;;Total: 18.0;eligible
 00012;Tara Deuchler;22/2025;330000262.0;49.0;Yearly;360.0;approved;6,0;
 00012;Tara Deuchler;22/2025;330000265.0;32.0;Monthly;360.0;approved;3,0;
 00012;Tara Deuchler;22/2025;330000266.0;57.0;Monthly;360.0;approved;4,0;

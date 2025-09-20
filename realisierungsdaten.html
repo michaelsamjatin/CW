@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realisierungsdaten - Changing Waves</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: white;
+            color: black;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 210mm;
+            margin: 0 auto;
+        }
+
+        .header {
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 2px solid black;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .header .address {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+            padding: 10px 0;
+            border-bottom: 1px solid black;
+        }
+
+        .info-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .info-field label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 3px;
+            font-size: 12px;
+        }
+
+        .info-field input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid black;
+            font-size: 12px;
+            background: white;
+        }
+
+        .week-section {
+            margin-bottom: 40px;
+        }
+
+        .week-title {
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .week-title input {
+            border: 1px solid black;
+            padding: 3px 8px;
+            font-size: 13px;
+            width: 80px;
+            background: white;
+        }
+
+        .week-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-bottom: 10px;
+        }
+
+        .week-table th {
+            background-color: white;
+            color: black;
+            padding: 8px 6px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: bold;
+            border-bottom: 2px solid black;
+        }
+
+        .week-table td {
+            padding: 6px;
+            border-bottom: 1px solid #ddd;
+            font-size: 11px;
+            background: white;
+        }
+
+        .week-table input,
+        .week-table select {
+            width: 100%;
+            padding: 3px;
+            border: 1px solid #ccc;
+            font-size: 10px;
+            background: white;
+        }
+
+        .week-footer {
+            background-color: white;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+
+        .week-footer .points-total {
+            font-weight: bold;
+        }
+
+        .week-footer select {
+            padding: 3px 8px;
+            border: 1px solid black;
+            font-size: 11px;
+            background: white;
+        }
+
+        .add-row-btn,
+        .add-week-btn {
+            background-color: white;
+            color: black;
+            border: 1px solid black;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+
+        .add-row-btn:hover,
+        .add-week-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .add-week-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .add-week-btn {
+            padding: 8px 15px;
+            font-size: 12px;
+        }
+
+        @media print {
+            body { padding: 0; }
+            .add-row-btn, .add-week-btn, .add-week-container { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>CWF Changing Waves Fundraising GmbH</h1>
+            <div class="address">Moselstraße 26 • 50674 Köln</div>
+        </div>
+
+        <!-- Subtitle -->
+        <div class="subtitle">
+            Realisierungsdaten
+        </div>
+
+        <!-- Info Fields -->
+        <div class="info-fields">
+            <div class="info-field">
+                <label>Name:</label>
+                <input type="text" placeholder="Charlotte Lui">
+            </div>
+            <div class="info-field">
+                <label>Fundraiser-ID:</label>
+                <input type="text" placeholder="00004">
+            </div>
+            <div class="info-field">
+                <label>Monat:</label>
+                <input type="text" placeholder="November">
+            </div>
+            <div class="info-field">
+                <label>Jahr:</label>
+                <input type="text" placeholder="2025">
+            </div>
+        </div>
+
+        <!-- Wochen Container -->
+        <div id="weeks-container">
+            <!-- Woche 1 -->
+            <div class="week-section">
+                <div class="week-title">
+                    <span>Kalenderwoche:</span>
+                    <input type="text" placeholder="KW 47">
+                </div>
+                
+                <table class="week-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Public Ref ID</th>
+                            <th style="width: 10%;">Alter</th>
+                            <th style="width: 15%;">Intervall</th>
+                            <th style="width: 12%;">Jahresbeitrag</th>
+                            <th style="width: 13%;">Status</th>
+                            <th style="width: 10%;">Punkte</th>
+                        </tr>
+                    </thead>
+                    <tbody class="week-tbody">
+                        <tr>
+                            <td><input type="text" placeholder="330000008.0"></td>
+                            <td><input type="number" step="0.1" placeholder="54.0"></td>
+                            <td>
+                                <select>
+                                    <option value="">Wählen</option>
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="Yearly">Yearly</option>
+                                    <option value="Half-Yearly">Half-Yearly</option>
+                                </select>
+                            </td>
+                            <td><input type="number" step="0.1" placeholder="360.0"></td>
+                            <td>
+                                <select>
+                                    <option value="">Status</option>
+                                    <option value="approved">approved</option>
+                                    <option value="cancelled">cancelled</option>
+                                </select>
+                            </td>
+                            <td><input type="number" step="0.5" placeholder="4.0" class="points-input"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" placeholder="330000010.0"></td>
+                            <td><input type="number" step="0.1" placeholder="79.0"></td>
+                            <td>
+                                <select>
+                                    <option value="">Wählen</option>
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="Yearly">Yearly</option>
+                                    <option value="Half-Yearly">Half-Yearly</option>
+                                </select>
+                            </td>
+                            <td><input type="number" step="0.1" placeholder="360.0"></td>
+                            <td>
+                                <select>
+                                    <option value="">Status</option>
+                                    <option value="approved">approved</option>
+                                    <option value="cancelled">cancelled</option>
+                                </select>
+                            </td>
+                            <td><input type="number" step="0.5" placeholder="4.0" class="points-input"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text"></td>
+                            <td><input type="number" step="0.1"></td>
+                            <td>
+                                <select>
+                                    <option value="">Wählen</option>
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="Yearly">Yearly</option>
+                                    <option value="Half-Yearly">Half-Yearly</option>
+                                </select>
+                            </td>
+                            <td><input type="number" step="0.1"></td>
+                            <td>
+                                <select>
+                                    <option value="">Status</option>
+                                    <option value="approved">approved</option>
+                                    <option value="cancelled">cancelled</option>
+                                </select>
+                            </td>
+                            <td><input type="number" step="0.5" class="points-input"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="week-footer">
+                    <div>
+                        <span class="points-total">Punkte gesamt: <span class="total-display">0.0</span></span>
+                        <button class="add-row-btn" onclick="addRow(this)">+ Zeile</button>
+                    </div>
+                    <div>
+                        <label>Bonus gewährt:</label>
+                        <select>
+                            <option value="">Wählen</option>
+                            <option value="ja">Ja</option>
+                            <option value="nein">Nein</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Week Button -->
+        <div class="add-week-container">
+            <button class="add-week-btn" onclick="addWeek()">+ Weitere Woche hinzufügen</button>
+        </div>
+    </div>
+
+    <script>
+        let weekCounter = 1;
+
+        // Zeile hinzufügen
+        function addRow(button) {
+            const weekSection = button.closest('.week-section');
+            const tbody = weekSection.querySelector('.week-tbody');
+            const newRow = tbody.rows[0].cloneNode(true);
+            
+            // Alle Felder leeren
+            const inputs = newRow.querySelectorAll('input, select');
+            inputs.forEach(input => input.value = '');
+            
+            tbody.appendChild(newRow);
+            updateWeekTotal(weekSection);
+        }
+
+        // Woche hinzufügen
+        function addWeek() {
+            weekCounter++;
+            const container = document.getElementById('weeks-container');
+            const newWeek = document.querySelector('.week-section').cloneNode(true);
+            
+            // KW-Feld leeren
+            const kwInput = newWeek.querySelector('.week-title input');
+            kwInput.value = '';
+            kwInput.placeholder = `KW ${47 + weekCounter - 1}`;
+            
+            // Alle Datenfelder leeren
+            const inputs = newWeek.querySelectorAll('.week-table input, .week-table select');
+            inputs.forEach(input => input.value = '');
+            
+            // Bonus-Feld zurücksetzen
+            const bonusSelect = newWeek.querySelector('.week-footer select');
+            bonusSelect.value = '';
+            
+            // Total zurücksetzen
+            newWeek.querySelector('.total-display').textContent = '0.0';
+            
+            container.appendChild(newWeek);
+        }
+
+        // Punkte pro Woche berechnen
+        function updateWeekTotal(weekSection) {
+            const pointsInputs = weekSection.querySelectorAll('.points-input');
+            let total = 0;
+            
+            pointsInputs.forEach(input => {
+                const value = parseFloat(input.value) || 0;
+                total += value;
+            });
+            
+            weekSection.querySelector('.total-display').textContent = total.toFixed(1);
+        }
+
+        // Event Listener für alle Punkte-Updates
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('points-input')) {
+                const weekSection = e.target.closest('.week-section');
+                updateWeekTotal(weekSection);
+            }
+        });
+
+        // Initial setup
+        updateWeekTotal(document.querySelector('.week-section'));
+    </script>
+</body>
+</html>

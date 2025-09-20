@@ -8,6 +8,7 @@ import threading
 import os
 import platform
 import sys
+import tempfile
 
 # Platform-specific imports
 try:
@@ -194,10 +195,10 @@ class CSVFormatterApp:
         try:
             self.root.after(0, self.show_processing)
             
-            # Get output filename
+            # Get output filename (Windows-safe path handling)
             input_dir = os.path.dirname(self.input_file)
             input_name = os.path.splitext(os.path.basename(self.input_file))[0]
-            output_file = os.path.join(input_dir, f"{input_name}_formatted.csv")
+            output_file = os.path.normpath(os.path.join(input_dir, f"{input_name}_formatted.csv"))
             
             # Process the file
             result = self.format_csv(self.input_file, output_file)
@@ -294,16 +295,25 @@ class CSVFormatterApp:
         return 'eligible' if approval_rate >= 0.7 else 'not-eligible'
     
     def format_csv(self, input_file, output_file):
-        # Handle file path encoding issues on Windows
-        try:
-            # Read CSV, skipping the first 2 header rows
-            df = pd.read_csv(input_file, sep=';', encoding='utf-8-sig', skiprows=2)
-        except UnicodeDecodeError:
-            # Fallback for Windows encoding issues
+        # Handle file path encoding issues on Windows and other platforms
+        encodings = ['utf-8-sig', 'utf-8', 'cp1252', 'iso-8859-1', 'latin1']
+        df = None
+
+        for encoding in encodings:
             try:
-                df = pd.read_csv(input_file, sep=';', encoding='cp1252', skiprows=2)
+                # Read CSV, skipping the first 2 header rows
+                df = pd.read_csv(input_file, sep=';', encoding=encoding, skiprows=2)
+                print(f"Successfully read file with {encoding} encoding")
+                break
             except UnicodeDecodeError:
-                df = pd.read_csv(input_file, sep=';', encoding='iso-8859-1', skiprows=2)
+                continue
+            except Exception as e:
+                if encoding == encodings[-1]:  # Last encoding attempt
+                    raise Exception(f"Could not read file with any supported encoding. Error: {e}")
+                continue
+
+        if df is None:
+            raise Exception("Could not read the CSV file with any supported encoding")
         
         # Clean column names
         df.columns = df.columns.str.strip()

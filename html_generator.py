@@ -198,11 +198,13 @@ def generate_html_for_fundraiser(fundraiser_data, template_path, output_dir):
     '''
     new_content = new_content.replace('</head>', readonly_css + '</head>')
 
-    # Create output filename
+    # Create output filename (Windows-safe)
     safe_name = re.sub(r'[^\w\s-]', '', fundraiser_name).strip()
     safe_name = re.sub(r'[-\s]+', '_', safe_name)
+    # Remove Windows invalid characters
+    safe_name = re.sub(r'[<>:"/\\|?*]', '', safe_name)
     output_filename = f"{fundraiser_id}_{safe_name}_Realisierungsdaten.html"
-    output_path = os.path.join(output_dir, output_filename)
+    output_path = os.path.normpath(os.path.join(output_dir, output_filename))
 
     # Write the HTML file
     with open(output_path, 'w', encoding='utf-8') as f:
