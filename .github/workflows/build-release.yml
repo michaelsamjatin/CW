@@ -26,10 +26,19 @@ jobs:
 
     - name: Build Windows executable
       run: |
-        pyinstaller --onefile --windowed --name "Realisierungsdatenvisualizer" --add-data "realisierungsdaten.html;." --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy --icon=logo.png csv_formatter_gui.py
+        pyinstaller --onefile --windowed --name "Realisierungsdatenvisualizer" --add-data "realisierungsdaten.html;." --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy csv_formatter_gui.py
+        # Verify the executable was created
+        if (Test-Path "dist/Realisierungsdatenvisualizer.exe") {
+          Write-Host "Executable created successfully"
+          Get-Item "dist/Realisierungsdatenvisualizer.exe" | Select-Object Name, Length
+        } else {
+          Write-Error "Executable was not created"
+          exit 1
+        }
+      shell: pwsh
 
     - name: Upload Windows artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: windows-executable
         path: dist/Realisierungsdatenvisualizer.exe
@@ -52,6 +61,14 @@ jobs:
     - name: Build macOS app
       run: |
         pyinstaller --onefile --windowed --name "Realisierungsdatenvisualizer" --add-data "realisierungsdaten.html:." --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy csv_formatter_gui.py
+        # Verify the executable was created
+        if [ -f "dist/Realisierungsdatenvisualizer" ]; then
+          echo "Executable created successfully"
+          ls -la dist/Realisierungsdatenvisualizer
+        else
+          echo "Error: Executable was not created"
+          exit 1
+        fi
 
     - name: Create DMG (if available)
       run: |
@@ -61,7 +78,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload macOS artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-executable
         path: dist/Realisierungsdatenvisualizer
@@ -89,9 +106,17 @@ jobs:
     - name: Build Linux executable
       run: |
         pyinstaller --onefile --windowed --name "Realisierungsdatenvisualizer" --add-data "realisierungsdaten.html:." --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy csv_formatter_gui.py
+        # Verify the executable was created
+        if [ -f "dist/Realisierungsdatenvisualizer" ]; then
+          echo "Executable created successfully"
+          ls -la dist/Realisierungsdatenvisualizer
+        else
+          echo "Error: Executable was not created"
+          exit 1
+        fi
 
     - name: Upload Linux artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: linux-executable
         path: dist/Realisierungsdatenvisualizer
@@ -102,11 +127,12 @@ jobs:
     if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
 
     - name: Create release assets
       run: |
         mkdir release-assets
+        # In artifact v4, files are extracted directly to named directories
         cp windows-executable/Realisierungsdatenvisualizer.exe release-assets/Realisierungsdatenvisualizer-Windows.exe
         cp macos-executable/Realisierungsdatenvisualizer release-assets/Realisierungsdatenvisualizer-macOS
         cp linux-executable/Realisierungsdatenvisualizer release-assets/Realisierungsdatenvisualizer-Linux
@@ -115,8 +141,11 @@ jobs:
         chmod +x release-assets/Realisierungsdatenvisualizer-macOS
         chmod +x release-assets/Realisierungsdatenvisualizer-Linux
 
+        # List files for debugging
+        ls -la release-assets/
+
     - name: Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: release-assets/*
