@@ -212,10 +212,15 @@ class CSVFormatterApp:
         self.status_label.config(text=f"✓ Processing complete! {result['rows']} rows processed", 
                                 fg="#27ae60")
         
-        messagebox.showinfo("Success", 
-                           f"CSV processed successfully!\n\n"
-                           f"Rows processed: {result['rows']}\n"
-                           f"Output saved to: {os.path.basename(output_file)}")
+        # Generate success message
+        success_msg = f"CSV processed successfully!\n\nRows processed: {result['rows']}\nOutput saved to: {os.path.basename(output_file)}"
+
+        # Add HTML generation info if applicable
+        if 'html_files' in result and result['html_files']:
+            success_msg += f"\n\nHTML files generated: {len(result['html_files'])}"
+            success_msg += f"\nLocation: html_output/"
+
+        messagebox.showinfo("Success", success_msg)
     
     def processing_error(self, error_msg):
         self.hide_processing()
@@ -429,7 +434,17 @@ class CSVFormatterApp:
                             row_values.append(str(value))
                 f.write(';'.join(row_values) + '\n')
         
-        return {"rows": len(final_df)}
+        # Generate HTML files if template exists
+        html_files = []
+        template_path = "realisierungsdaten.html"
+        if os.path.exists(template_path):
+            try:
+                from html_generator import generate_all_html_files
+                html_files = generate_all_html_files(output_file, template_path)
+            except Exception as e:
+                print(f"Error generating HTML files: {e}")
+
+        return {"rows": len(final_df), "html_files": html_files}
     
     def run(self):
         self.root.mainloop()

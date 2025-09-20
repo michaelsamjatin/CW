@@ -1,63 +1,81 @@
 import pandas as pd
 import numpy as np
 from collections import defaultdict
+import os
+from html_generator import generate_all_html_files
 
 def calculate_points(age, interval, amount_yearly):
     """
     Calculate points based on age, donation interval, and yearly amount.
     Rules:
-    - Under 25: always 0.5 points
-    - Under 30 monthly: 0.5 points, other frequencies: 1 point
-    - 30+ follow table, 40+ get +1 extra point
+    - Spenderin unter 25 Jahren pauschal 0,5 Punkte
+    - Spenderin unter 30 Jahren: monatlich 0,5 Punkte, sonst pauschal 1 Punkt
+    - Spenderin ab 30 reguläre Punktevergabe nach Tabelle
+    - Spenderin über 40 Jahre: +1 extra Punkt
+
+    Point table:
+    Jahresbeitrag | Jährlich | Halbjährlich | Monatlich
+    Ab 120 €     |    2     |     1,5      |     1
+    Ab 180 €     |    3     |     2,5      |    1,5
+    Ab 240 €     |    4     |      3       |     2
+    Ab 360 €     |    5     |      4       |     3
     """
     age = int(age)
     amount = float(amount_yearly)
-    
+
     # Under 25: always 0.5 points
     if age < 25:
         return 0.5
-    
+
     # Under 30 but 25+: monthly = 0.5, others = 1
     if age < 30:
         return 0.5 if interval.lower() == 'monthly' else 1.0
-    
+
     # 30+ follow the point table
     base_points = 0
+    interval_lower = interval.lower()
+
     if amount >= 360:
-        if interval.lower() == 'yearly':
+        if 'yearly' in interval_lower or 'jährlich' in interval_lower:
             base_points = 5
-        elif 'half' in interval.lower():
+        elif 'half' in interval_lower or 'halbjährlich' in interval_lower:
             base_points = 4
-        else:  # monthly
+        else:  # monthly/monatlich
             base_points = 3
     elif amount >= 240:
-        if interval.lower() == 'yearly':
+        if 'yearly' in interval_lower or 'jährlich' in interval_lower:
             base_points = 4
-        elif 'half' in interval.lower():
+        elif 'half' in interval_lower or 'halbjährlich' in interval_lower:
             base_points = 3
-        else:  # monthly
+        else:  # monthly/monatlich
             base_points = 2
     elif amount >= 180:
-        if interval.lower() == 'yearly':
+        if 'yearly' in interval_lower or 'jährlich' in interval_lower:
             base_points = 3
-        elif 'half' in interval.lower():
+        elif 'half' in interval_lower or 'halbjährlich' in interval_lower:
             base_points = 2.5
-        else:  # monthly
+        else:  # monthly/monatlich
             base_points = 1.5
     elif amount >= 120:
-        if interval.lower() == 'yearly':
+        if 'yearly' in interval_lower or 'jährlich' in interval_lower:
             base_points = 2
-        elif 'half' in interval.lower():
+        elif 'half' in interval_lower or 'halbjährlich' in interval_lower:
             base_points = 1.5
-        else:  # monthly
+        else:  # monthly/monatlich
             base_points = 1
     else:
-        base_points = 1  # minimum
-    
-    # 40+ get +1 extra point
-    if age >= 40:
+        # Less than 120€ - minimum points based on interval
+        if 'yearly' in interval_lower or 'jährlich' in interval_lower:
+            base_points = 1
+        elif 'half' in interval_lower or 'halbjährlich' in interval_lower:
+            base_points = 0.5
+        else:  # monthly/monatlich
+            base_points = 0.5
+
+    # Over 40 (not 40+): +1 extra point
+    if age > 40:
         base_points += 1
-    
+
     return base_points
 
 def calculate_bonus_eligibility(fundraiser_data):
@@ -82,9 +100,18 @@ def calculate_bonus_eligibility(fundraiser_data):
     approval_rate = approved_donors / total_donors
     return 'eligible' if approval_rate >= 0.7 else 'not-eligible'
 
-def format_csv(input_file, output_file):
+def format_csv(input_file, output_file, generate_html=True, html_template_path="realisierungsdaten.html"):
     """
-    Main function to reformat the CSV according to specifications.
+    Main function to reformat the CSV according to specifications and optionally generate HTML files.
+
+    Args:
+        input_file: Path to input CSV file
+        output_file: Path to output CSV file
+        generate_html: Whether to generate HTML files for each fundraiser
+        html_template_path: Path to HTML template file
+
+    Returns:
+        dict: Summary of processing results
     """
     # Read CSV, skipping the first 2 header rows
     df = pd.read_csv(input_file, sep=';', encoding='utf-8-sig', skiprows=2)
@@ -228,6 +255,24 @@ def format_csv(input_file, output_file):
     print(f"CSV formatted successfully! Output saved to: {output_file}")
     print(f"Total rows processed: {len(final_df)}")
     print(f"Added subtotal rows for each fundraiser per calendar week")
+
+    # Generate HTML files if requested
+    html_files = []
+    if generate_html and os.path.exists(html_template_path):
+        try:
+            print("\nGenerating HTML files for each fundraiser...")
+            html_files = generate_all_html_files(output_file, html_template_path)
+            print(f"Generated {len(html_files)} HTML files in 'html_output' directory")
+        except Exception as e:
+            print(f"Error generating HTML files: {e}")
+    elif generate_html:
+        print(f"Warning: HTML template not found at {html_template_path}. Skipping HTML generation.")
+
+    return {
+        "csv_rows": len(final_df),
+        "html_files": html_files,
+        "csv_path": output_file
+    }
 
 if __name__ == "__main__":
     # Usage
