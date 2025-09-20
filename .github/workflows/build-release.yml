@@ -26,7 +26,7 @@ jobs:
 
     - name: Test build requirements
       run: |
-        python test_build.py
+        test_build_windows.bat
 
     - name: Build Windows executable
       run: |
