@@ -10,8 +10,13 @@ import os
 
 # Set UTF-8 encoding for Windows console
 if sys.platform == 'win32':
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    try:
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    except Exception:
+        # If UTF-8 setup fails, continue with default encoding
+        pass
 
 # Windows-compatible output symbols
 if sys.platform == 'win32':
@@ -23,29 +28,38 @@ else:
     CROSS = "✗"
     WARN = "⚠"
 
+def safe_print(message):
+    """Print message with encoding error handling."""
+    try:
+        print(message)
+    except UnicodeEncodeError:
+        # Fallback to ASCII-safe output
+        safe_message = message.encode('ascii', 'ignore').decode('ascii')
+        print(safe_message)
+
 def test_imports():
     """Test that all required modules can be imported."""
     try:
         import pandas
         import numpy
-        print(f"{CHECK} pandas {pandas.__version__}")
-        print(f"{CHECK} numpy {numpy.__version__}")
+        safe_print(f"{CHECK} pandas {pandas.__version__}")
+        safe_print(f"{CHECK} numpy {numpy.__version__}")
     except ImportError as e:
-        print(f"{CROSS} Failed to import basic dependencies: {e}")
+        safe_print(f"{CROSS} Failed to import basic dependencies: {e}")
         return False
 
     try:
         import tkinter
-        print(f"{CHECK} tkinter available")
+        safe_print(f"{CHECK} tkinter available")
     except ImportError as e:
-        print(f"{CROSS} tkinter not available: {e}")
+        safe_print(f"{CROSS} tkinter not available: {e}")
         return False
 
     try:
         from tkinterdnd2 import DND_FILES, TkinterDnD
-        print(f"{CHECK} tkinterdnd2 available")
+        safe_print(f"{CHECK} tkinterdnd2 available")
     except ImportError:
-        print(f"{WARN} tkinterdnd2 not available (drag & drop will be disabled)")
+        safe_print(f"{WARN} tkinterdnd2 not available (drag & drop will be disabled)")
 
     return True
 
@@ -66,17 +80,17 @@ def test_csv_processing():
         points = calculate_points(45, "Monthly", 360)
         assert points == 4.0, f"Expected 4.0 points, got {points}"
 
-        print(f"{CHECK} Point calculation working")
+        safe_print(f"{CHECK} Point calculation working")
         return True
 
     except ImportError as e:
-        print(f"{CROSS} Failed to import processing modules: {e}")
+        safe_print(f"{CROSS} Failed to import processing modules: {e}")
         return False
     except AssertionError as e:
-        print(f"{CROSS} Point calculation test failed: {e}")
+        safe_print(f"{CROSS} Point calculation test failed: {e}")
         return False
     except Exception as e:
-        print(f"{CROSS} Unexpected error in CSV processing test: {e}")
+        safe_print(f"{CROSS} Unexpected error in CSV processing test: {e}")
         return False
 
 def test_file_exists():
@@ -90,17 +104,17 @@ def test_file_exists():
 
     for file in required_files:
         if os.path.exists(file):
-            print(f"{CHECK} {file} exists")
+            safe_print(f"{CHECK} {file} exists")
         else:
-            print(f"{CROSS} {file} missing")
+            safe_print(f"{CROSS} {file} missing")
             return False
 
     return True
 
 def main():
     """Run all tests."""
-    print("Testing build requirements...")
-    print("=" * 40)
+    safe_print("Testing build requirements...")
+    safe_print("=" * 40)
 
     tests = [
         ("File existence", test_file_exists),
@@ -110,16 +124,16 @@ def main():
 
     all_passed = True
     for test_name, test_func in tests:
-        print(f"\n{test_name}:")
+        safe_print(f"\n{test_name}:")
         if not test_func():
             all_passed = False
 
-    print("\n" + "=" * 40)
+    safe_print("\n" + "=" * 40)
     if all_passed:
-        print(f"{CHECK} All tests passed! Ready to build.")
+        safe_print(f"{CHECK} All tests passed! Ready to build.")
         sys.exit(0)
     else:
-        print(f"{CROSS} Some tests failed. Build may fail.")
+        safe_print(f"{CROSS} Some tests failed. Build may fail.")
         sys.exit(1)
 
 if __name__ == "__main__":

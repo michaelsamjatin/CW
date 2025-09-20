@@ -26,7 +26,10 @@ jobs:
 
     - name: Test build requirements
       run: |
-        test_build_windows.bat
+        $env:PYTHONIOENCODING = "utf-8"
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+        python test_build.py
+      shell: pwsh
 
     - name: Build Windows executable
       run: |
