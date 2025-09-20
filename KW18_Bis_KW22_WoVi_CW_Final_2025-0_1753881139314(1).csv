@@ -1,0 +1,96 @@
+﻿WoVi_CW_Final_2025-07-30;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;
+Billing group;Fundraiser ID;Fundraiser Name;Calendar week;Public RefID;Age;Interval;CallReached;Donorlevel Formunauts;Time Created;Campaign;status_agency;Cancellation Date;Payment Group;Successful Payments;Has Email;Has Phone No;Rating;Amount Yearly;Amount Billable;Billed to Agency;Claim;Missing claim
+Active & billable;00001;Luna Fenner;21/2025;330000248;29;Monthly;0;Mid;May 19, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;0%;;360;360;335,16;478,8;143,64
+;;;;330000251;39;Monthly;0;Top;May 21, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;5;360;360;378;504;126
+;;;;330000253;31;Monthly;0;Top;May 21, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;5;360;360;378;504;126
+;;;;330000260;24;Monthly;1;Low;May 24, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;;360;360;226,8;453,6;226,8
+;;;22/2025;330000261;65;Half-Yearly;1;Top;May 26, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;5;360;360;378;504;126
+;;;;330000270;56;Half-Yearly;0;Mid;May 28, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;335,16;478,8;143,64
+;;00001 Subtotal;;;;;;;;;;;;;100%;83%;5;2.160;2.160;2.031,12;2.923,2;892,08
+;00005;Linus Möller;18/2025;330000202;22;Monthly;0;Low;Apr 28, 2025;World Vision Deutschland;approved;null;LSV/DD;3;100%;100%;5;360;360;226,8;453,6;226,8
+;;;;330000209;28;Monthly;0;Mid;Apr 29, 2025;World Vision Deutschland;approved;null;LSV/DD;3;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000210;34;Monthly;1;Top;Apr 29, 2025;World Vision Deutschland;approved;null;LSV/DD;3;100%;100%;5;360;360;378;504;126
+;;;;330000213;43;Monthly;1;Top;May 3, 2025;World Vision Deutschland;approved;null;LSV/DD;3;100%;100%;5;360;360;378;504;126
+;;;19/2025;330000219;24;Monthly;0;Low;May 6, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;5;360;360;226,8;453,6;226,8
+;;;;330000228;51;Monthly;0;Mid;May 9, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;0%;;360;360;335,16;478,8;143,64
+;;;;330000229;22;Monthly;0;Low;May 9, 2025;World Vision Deutschland;cancelled;Jun 4, 2025;LSV/DD;1;100%;100%;;360;360;226,8;453,6;226,8
+;;;;330000230;25;Monthly;0;Low;May 9, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;;360;360;226,8;453,6;226,8
+;;;;330000233;32;Monthly;0;Mid;May 10, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000234;30;Monthly;0;Mid;May 10, 2025;World Vision Deutschland;cancelled;Jul 21, 2025;LSV/DD;2;100%;100%;;360;360;335,16;478,8;143,64
+;;00005 Subtotal;;;;;;;;;;;;;100%;90%;5;3.600;3.600;3.003,84;4.737,6;1.733,76
+;00010;Jaime Dos Santos Mendes;19/2025;330000217;46;Monthly;0;Mid;May 6, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000224;28;Monthly;0;Top;May 7, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;5;360;360;378;504;126
+;;;;330000225;31;Monthly;1;Top;May 8, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;5;360;360;378;504;126
+;;;;330000231;31;Monthly;0;Mid;May 9, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000236;24;Monthly;0;Low;May 10, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;;360;360;226,8;453,6;226,8
+;;00010 Subtotal;;;;;;;;;;;;;100%;100%;5;1.800;1.800;1.653,12;2.419,2;766,08
+;00011;Charly Büchling;18/2025;330000203;26;Monthly;0;Low;Apr 28, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;5;360;360;226,8;453,6;226,8
+;;;;330000205;44;Monthly;0;Top;Apr 28, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;5;360;360;378;504;126
+;;;;330000206;21;Monthly;1;Low;Apr 28, 2025;World Vision Deutschland;conditionally-approved;null;LSV/DD;3;100%;100%;;360;360;226,8;453,6;226,8
+;;;19/2025;330000214;32;Monthly;0;Top;May 5, 2025;World Vision Deutschland;cancelled;Jun 11, 2025;LSV/DD;1;100%;100%;5;360;360;378;504;126
+;;;;330000218;64;Monthly;0;Mid;May 6, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000221;28;Monthly;0;Mid;May 7, 2025;World Vision Deutschland;cancelled;Jul 3, 2025;LSV/DD;2;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000222;28;Monthly;0;Top;May 7, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;5;360;360;378;504;126
+;;00011 Subtotal;;;;;;;;;;;;;100%;100%;5;2.520;2.520;2.257,92;3.376,8;1.118,88
+;00012;Tara Deuchler;21/2025;330000252;28;Monthly;1;Top;May 21, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;5;360;360;378;504;126
+;;;;330000255;72;Monthly;0;Mid;May 23, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000257;46;Monthly;1;Top;May 24, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;5;360;360;378;504;126
+;;;;330000258;51;Half-Yearly;0;Mid;May 24, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;335,16;478,8;143,64
+;;;22/2025;330000262;49;Yearly;1;Top;May 26, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;378;504;126
+;;;;330000265;32;Monthly;1;Top;May 26, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;378;504;126
+;;;;330000266;57;Monthly;0;Mid;May 27, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000268;42;Monthly;0;Mid;May 28, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000272;35;Monthly;1;Top;May 30, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;378;504;126
+;;;;330000273;26;Monthly;0;Low;May 30, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;5;360;360;226,8;453,6;226,8
+;;;;330000276;28;Monthly;1;Top;May 30, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;378;504;126
+;;;;330000278;23;Half-Yearly;0;Low;May 31, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;226,8;453,6;226,8
+;;00012 Subtotal;;;;;;;;;;;;;100%;100%;5;4.320;4.320;4.062,24;5.846,4;1.784,16
+;00015;Iman Shuaibat;20/2025;330000237;51;Monthly;0;Top;May 12, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;5;360;360;378;504;126
+;;;;330000238;27;Monthly;0;Mid;May 12, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000240;32;Monthly;0;Top;May 12, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;5;360;360;378;504;126
+;;;;330000242;23;Monthly;0;Low;May 13, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;5;360;360;226,8;453,6;226,8
+;;;;330000245;61;Monthly;1;Top;May 13, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;5;360;360;378;504;126
+;;;;330000246;35;Monthly;0;Mid;May 13, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;;360;360;335,16;478,8;143,64
+;;00015 Subtotal;;;;;;;;;;;;;100%;100%;5;2.160;2.160;2.031,12;2.923,2;892,08
+;00017;Joshua Carstens;20/2025;330000239;42;Monthly;0;Mid;May 12, 2025;World Vision Deutschland;cancelled;Jul 14, 2025;LSV/DD;1;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000244;37;Monthly;0;Top;May 13, 2025;World Vision Deutschland;cancelled;Jun 2, 2025;LSV/DD;1;100%;100%;5;360;360;378;504;126
+;;00017 Subtotal;;;;;;;;;;;;;100%;100%;5;720;720;713,16;982,8;269,64
+;00020;Killian Nash-Gavilán;21/2025;330000249;27;Monthly;0;Top;May 19, 2025;World Vision Deutschland;cancelled;Jul 2, 2025;LSV/DD;1;100%;100%;5;360;360;378;504;126
+;;;;330000254;22;Monthly;0;Low;May 22, 2025;World Vision Deutschland;approved;null;LSV/DD;2;100%;100%;;360;360;226,8;453,6;226,8
+;;;22/2025;330000269;47;Monthly;0;Mid;May 28, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000271;26;Monthly;0;Low;May 28, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;0%;;360;360;226,8;453,6;226,8
+;;;;330000274;42;Monthly;0;Mid;May 30, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000275;29;Monthly;0;Mid;May 30, 2025;World Vision Deutschland;cancelled;Jul 8, 2025;LSV/DD;1;0%;100%;;360;360;335,16;478,8;143,64
+;;;;330000277;56;Monthly;0;Mid;May 31, 2025;World Vision Deutschland;approved;null;LSV/DD;1;100%;100%;;360;360;335,16;478,8;143,64
+;;;;330000279;22;Monthly;0;Low;May 31, 2025;World Vision Deutschland;cancelled;Jul 15, 2025;LSV/DD;1;100%;100%;;360;360;226,8;453,6;226,8
+;;00020 Subtotal;;;;;;;;;;;;;88%;88%;5;2.880;2.880;2.399,04;3.780;1.380,96
+Cancellation/payment policy;00001;Luna Fenner;21/2025;330000247;25;Half-Yearly;0;Low;May 19, 2025;World Vision Deutschland;cancelled;Jun 13, 2025;LSV/DD;0;100%;100%;;360;;226,8;0;-226,8
+;;;;330000259;23;Monthly;0;Low;May 24, 2025;World Vision Deutschland;cancelled;Jun 3, 2025;LSV/DD;null;100%;100%;;360;;226,8;0;-226,8
+;;;22/2025;330000264;44;Yearly;0;Mid;May 26, 2025;World Vision Deutschland;approved;null;LSV/DD;0;100%;100%;;360;;335,16;0;-335,16
+;;00001 Subtotal;;;;;;;;;;;;;100%;100%;;1.080;;788,76;0;-788,76
+;00005;Linus Möller;18/2025;330000204;34;Monthly;0;Top;Apr 28, 2025;World Vision Deutschland;approved;null;LSV/DD;0;100%;100%;5;360;;378;0;-378
+;;;;330000207;23;Monthly;1;Low;Apr 28, 2025;World Vision Deutschland;approved;null;LSV/DD;0;100%;100%;;360;;226,8;0;-226,8
+;;;;330000208;51;Monthly;0;Mid;Apr 29, 2025;World Vision Deutschland;approved;null;LSV/DD;0;0%;0%;;360;;335,16;0;-335,16
+;;;;330000211;22;Half-Yearly;0;Low;May 2, 2025;World Vision Deutschland;approved;null;LSV/DD;0;100%;100%;5;360;;226,8;0;-226,8
+;;;;330000212;22;Monthly;0;Low;May 3, 2025;World Vision Deutschland;cancelled;May 12, 2025;LSV/DD;0;100%;100%;5;360;;226,8;0;-226,8
+;;;19/2025;330000232;22;Monthly;1;Low;May 10, 2025;World Vision Deutschland;failed;May 13, 2025;LSV/DD;null;100%;100%;;360;;0;0;0
+;;00005 Subtotal;;;;;;;;;;;;;83%;83%;5;2.160;;1.393,56;0;-1.393,56
+;00010;Jaime Dos Santos Mendes;19/2025;330000216;29;Monthly;1;Mid;May 5, 2025;World Vision Deutschland;cancelled;Jun 20, 2025;LSV/DD;0;100%;100%;;360;;378;0;-378
+;;;;330000220;30;Monthly;0;Mid;May 6, 2025;World Vision Deutschland;cancelled;Jun 2, 2025;LSV/DD;0;100%;100%;;360;;335,16;0;-335,16
+;;;;330000226;25;Monthly;0;Low;May 8, 2025;World Vision Deutschland;approved;null;LSV/DD;0;100%;100%;;360;;226,8;0;-226,8
+;;;;330000227;23;Monthly;0;Low;May 9, 2025;World Vision Deutschland;approved;null;LSV/DD;0;100%;100%;;360;;226,8;0;-226,8
+;;;;330000235;21;Monthly;0;Low;May 10, 2025;World Vision Deutschland;cancelled;May 19, 2025;LSV/DD;null;100%;100%;;360;;226,8;0;-226,8
+;;00010 Subtotal;;;;;;;;;;;;;100%;100%;;1.800;;1.393,56;0;-1.393,56
+;00011;Charly Büchling;19/2025;330000215;26;Monthly;0;Low;May 5, 2025;World Vision Deutschland;cancelled;May 19, 2025;LSV/DD;null;100%;100%;;360;;226,8;0;-226,8
+;;;;330000223;38;Monthly;0;Top;May 7, 2025;World Vision Deutschland;approved;null;LSV/DD;0;100%;100%;5;360;;378;0;-378
+;;00011 Subtotal;;;;;;;;;;;;;100%;100%;5;720;;604,8;0;-604,8
+;00017;Joshua Carstens;20/2025;330000241;29;Monthly;0;Mid;May 13, 2025;World Vision Deutschland;approved;null;LSV/DD;0;100%;100%;;360;;335,16;0;-335,16
+;;;;330000243;28;Monthly;0;Mid;May 13, 2025;World Vision Deutschland;cancelled;May 26, 2025;LSV/DD;null;100%;100%;;360;;335,16;0;-335,16
+;;00017 Subtotal;;;;;;;;;;;;;100%;100%;;720;;670,32;0;-670,32
+;00020;Killian Nash-Gavilán;21/2025;330000250;26;Half-Yearly;0;Low;May 20, 2025;World Vision Deutschland;approved;null;LSV/DD;0;100%;100%;5;360;;226,8;0;-226,8
+;;;;330000256;65;Monthly;0;Mid;May 23, 2025;World Vision Deutschland;cancelled;Jun 10, 2025;LSV/DD;null;0%;100%;;360;;335,16;0;-335,16
+;;;22/2025;330000263;40;Monthly;1;Top;May 26, 2025;World Vision Deutschland;approved;null;LSV/DD;0;100%;100%;;360;;378;0;-378
+;;;;330000267;56;Yearly;0;Top;May 27, 2025;World Vision Deutschland;cancelled;Jun 17, 2025;LSV/DD;null;100%;100%;5;360;;378;0;-378
+;;00020 Subtotal;;;;;;;;;;;;;75%;100%;5;1.440;;1.317,96;0;-1.317,96
+Total;;;;;;;;;;;;;;;96%;95%;5;28.080;20.160;24.320,52;26.989,2;2.668,68

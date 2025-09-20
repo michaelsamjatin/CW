@@ -1,0 +1,9 @@
+# Windows 10+ requirements
+pandas>=1.5.0
+numpy>=1.21.0
+tkinterdnd2>=0.4.0
+cx-Freeze>=6.14.0
+pywin32>=306
+
+# Optional but recommended for better Windows compatibility
+pyinstaller>=5.7.0
