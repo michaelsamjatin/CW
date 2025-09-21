@@ -48,11 +48,29 @@ jobs:
         }
       shell: pwsh
 
-    - name: Upload Windows artifact
+    - name: Install Inno Setup
+      run: |
+        choco install innosetup -y
+      shell: pwsh
+
+    - name: Create Windows installer
+      run: |
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+        # Verify installer was created
+        if (Test-Path "dist/Realisierungsdatenvisualizer-Setup.exe") {
+          Write-Host "Installer created successfully"
+          Get-Item "dist/Realisierungsdatenvisualizer-Setup.exe" | Select-Object Name, Length
+        } else {
+          Write-Error "Installer was not created"
+          exit 1
+        }
+      shell: pwsh
+
+    - name: Upload Windows installer artifact
       uses: actions/upload-artifact@v4
       with:
-        name: windows-executable
-        path: dist/Realisierungsdatenvisualizer.exe
+        name: windows-installer
+        path: dist/Realisierungsdatenvisualizer-Setup.exe
 
   build-macos:
     runs-on: macos-latest
@@ -73,83 +91,51 @@ jobs:
       run: |
         python test_build.py
 
-    - name: Build macOS app
+    - name: Build macOS app bundle
       run: |
-        pyinstaller --onefile --windowed --name "Realisierungsdatenvisualizer" --add-data "realisierungsdaten.html:." --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy csv_formatter_gui.py
-        # Verify the executable was created
-        if [ -f "dist/Realisierungsdatenvisualizer" ]; then
-          echo "Executable created successfully"
-          ls -la dist/Realisierungsdatenvisualizer
+        pyinstaller --windowed --name "Realisierungsdatenvisualizer" --add-data "realisierungsdaten.html:." --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy csv_formatter_gui.py
+        # Verify the app bundle was created
+        if [ -d "dist/Realisierungsdatenvisualizer.app" ]; then
+          echo "App bundle created successfully"
+          ls -la dist/Realisierungsdatenvisualizer.app
         else
-          echo "Error: Executable was not created"
+          echo "Error: App bundle was not created"
           exit 1
         fi
 
-    - name: Create DMG (if available)
+    - name: Install create-dmg
       run: |
-        if [ -f "dmg_settings.py" ]; then
-          python dmg_settings.py
-        fi
-      continue-on-error: true
+        brew install create-dmg
 
-    - name: Upload macOS artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: macos-executable
-        path: dist/Realisierungsdatenvisualizer
-
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: Install system dependencies
+    - name: Create DMG installer
       run: |
-        sudo apt-get update
-        sudo apt-get install -y python3-tk python3-dev build-essential
+        create-dmg \
+          --volname "Realisierungsdatenvisualizer" \
+          --volicon "logo.png" \
+          --window-pos 200 120 \
+          --window-size 600 300 \
+          --icon-size 100 \
+          --icon "Realisierungsdatenvisualizer.app" 175 120 \
+          --hide-extension "Realisierungsdatenvisualizer.app" \
+          --app-drop-link 425 120 \
+          "dist/Realisierungsdatenvisualizer.dmg" \
+          "dist/Realisierungsdatenvisualizer.app" || true
 
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        # Install requirements with fallback for problematic packages
-        pip install pandas>=1.5.0,\<2.1.0 numpy>=1.21.0,\<1.25.0 pyinstaller>=5.7.0
-        pip install tkinterdnd2>=0.4.0 || echo "tkinterdnd2 install failed, continuing..."
-
-    - name: Test build requirements
-      run: |
-        python test_build.py
-
-    - name: Build Linux executable
-      run: |
-        # Set display for headless build
-        export DISPLAY=:99
-        # Start a virtual display for GUI testing
-        sudo apt-get install -y xvfb
-        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-
-        pyinstaller --onefile --windowed --name "Realisierungsdatenvisualizer" --add-data "realisierungsdaten.html:." --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy csv_formatter_gui.py
-        # Verify the executable was created
-        if [ -f "dist/Realisierungsdatenvisualizer" ]; then
-          echo "Executable created successfully"
-          ls -la dist/Realisierungsdatenvisualizer
-        else
-          echo "Error: Executable was not created"
-          exit 1
+        # If create-dmg fails, create a simple DMG
+        if [ ! -f "dist/Realisierungsdatenvisualizer.dmg" ]; then
+          echo "create-dmg failed, creating simple DMG..."
+          hdiutil create -volname "Realisierungsdatenvisualizer" -srcfolder "dist/Realisierungsdatenvisualizer.app" -ov -format UDZO "dist/Realisierungsdatenvisualizer.dmg"
         fi
 
-    - name: Upload Linux artifact
+    - name: Upload macOS DMG artifact
       uses: actions/upload-artifact@v4
       with:
-        name: linux-executable
-        path: dist/Realisierungsdatenvisualizer
+        name: macos-dmg
+        path: dist/Realisierungsdatenvisualizer.dmg
+
 
   release:
-    needs: [build-windows, build-macos, build-linux]
+    needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
     permissions:
@@ -174,18 +160,11 @@ jobs:
         ls -la
 
         # In artifact v4, files are extracted directly to named directories
-        echo "Copying Windows executable..."
-        cp windows-executable/Realisierungsdatenvisualizer.exe release-assets/Realisierungsdatenvisualizer-Windows.exe
+        echo "Copying Windows installer..."
+        cp windows-installer/Realisierungsdatenvisualizer-Setup.exe release-assets/Realisierungsdatenvisualizer-Setup.exe
 
-        echo "Copying macOS executable..."
-        cp macos-executable/Realisierungsdatenvisualizer release-assets/Realisierungsdatenvisualizer-macOS
-
-        echo "Copying Linux executable..."
-        cp linux-executable/Realisierungsdatenvisualizer release-assets/Realisierungsdatenvisualizer-Linux
-
-        # Make executables executable
-        chmod +x release-assets/Realisierungsdatenvisualizer-macOS
-        chmod +x release-assets/Realisierungsdatenvisualizer-Linux
+        echo "Copying macOS DMG..."
+        cp macos-dmg/Realisierungsdatenvisualizer.dmg release-assets/Realisierungsdatenvisualizer.dmg
 
         # List files for debugging
         echo "Release assets created:"

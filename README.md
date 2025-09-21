@@ -6,9 +6,8 @@ A cross-platform application for processing and visualizing fundraising realizat
 
 **Get the latest version for your operating system:**
 
-[![Download for Windows](https://img.shields.io/badge/Download-Windows-blue?style=for-the-badge&logo=windows)](../../releases/latest/download/Realisierungsdatenvisualizer-Windows.exe)
-[![Download for macOS](https://img.shields.io/badge/Download-macOS-lightgrey?style=for-the-badge&logo=apple)](../../releases/latest/download/Realisierungsdatenvisualizer-macOS)
-[![Download for Linux](https://img.shields.io/badge/Download-Linux-orange?style=for-the-badge&logo=linux)](../../releases/latest/download/Realisierungsdatenvisualizer-Linux)
+[![Download for Windows](https://img.shields.io/badge/Download-Windows-blue?style=for-the-badge&logo=windows)](../../releases/latest/download/Realisierungsdatenvisualizer-Setup.exe)
+[![Download for macOS](https://img.shields.io/badge/Download-macOS-lightgrey?style=for-the-badge&logo=apple)](../../releases/latest/download/Realisierungsdatenvisualizer.dmg)
 
 Or visit the [Releases page](../../releases) to download specific versions.
 
@@ -42,11 +41,10 @@ Or visit the [Releases page](../../releases) to download specific versions.
 
 ## Quick Start
 
-### Option 1: Download Pre-Built Executable (Recommended)
-1. Download the appropriate version for your operating system from the links above
-2. **Windows**: Run `Realisierungsdatenvisualizer-Windows.exe`
-3. **macOS**: Run `Realisierungsdatenvisualizer-macOS` (may need to right-click → Open first time)
-4. **Linux**: Run `./Realisierungsdatenvisualizer-Linux`
+### Option 1: Download Installer (Recommended)
+1. Download the appropriate installer for your operating system from the links above
+2. **Windows**: Run `Realisierungsdatenvisualizer-Setup.exe` and follow the installation wizard
+3. **macOS**: Open `Realisierungsdatenvisualizer.dmg` and drag the app to your Applications folder
 
 ### Option 2: Run from Source
 ```bash
@@ -104,20 +102,10 @@ pyinstaller --onefile --windowed --name "Realisierungsdatenvisualizer" csv_forma
 # Install dependencies
 pip install -r requirements-macos.txt
 
-# Build app bundle
-pyinstaller --onefile --windowed --name "Realisierungsdatenvisualizer" csv_formatter_gui.py
-```
-
-#### Linux
-```bash
-# Install system dependencies (Ubuntu/Debian)
-sudo apt-get install python3-tk
-
-# Install Python dependencies
-pip install -r requirements-linux.txt
-
-# Build executable
-pyinstaller --onefile --windowed --name "Realisierungsdatenvisualizer" csv_formatter_gui.py
+# Build app bundle and DMG
+pyinstaller --windowed --name "Realisierungsdatenvisualizer" csv_formatter_gui.py
+brew install create-dmg
+create-dmg "Realisierungsdatenvisualizer.dmg" "dist/Realisierungsdatenvisualizer.app"
 ```
 
 ## File Structure
@@ -131,11 +119,10 @@ CW/
 ├── requirements.txt              # Base dependencies
 ├── requirements-windows.txt      # Windows-specific deps
 ├── requirements-macos.txt        # macOS-specific deps
-├── requirements-linux.txt        # Linux-specific deps
+├── installer.iss                 # Windows installer script
 ├── build_windows.bat             # Windows build script
 ├── build_macos_intel.sh          # Intel Mac build script
 ├── build_macos_universal.sh      # Universal Mac build script
-├── build_linux.sh               # Linux build script
 └── .github/workflows/            # Automated build configuration
 ```
 
@@ -152,11 +139,6 @@ CW/
 - 4GB RAM minimum
 - 100MB free disk space
 
-### Linux
-- Ubuntu 18.04+, CentOS 7+, Fedora 30+, or equivalent
-- Python 3.8+ with tkinter support
-- 4GB RAM minimum
-- 100MB free disk space
 
 ## Troubleshooting
 

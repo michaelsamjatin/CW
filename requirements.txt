@@ -6,4 +6,3 @@ tkinterdnd2>=0.4.0
 # Platform-specific build tools - install based on your OS:
 # Windows: pip install -r requirements-windows.txt
 # macOS: pip install -r requirements-macos.txt
-# Linux: pip install -r requirements-linux.txt
