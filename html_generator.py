@@ -16,8 +16,11 @@ def generate_html_for_fundraiser(fundraiser_data, template_path, output_dir):
     with open(template_path, 'r', encoding='utf-8') as f:
         template_content = f.read()
 
-    # Extract fundraiser info
-    fundraiser_id = fundraiser_data['Fundraiser ID'].iloc[0]
+    # Extract fundraiser info - preserve original ID formatting
+    fundraiser_id = str(fundraiser_data['Fundraiser ID'].iloc[0])
+    # Ensure fundraiser ID has leading zeros (5 digits)
+    if fundraiser_id.replace('.', '').replace('0', '').isdigit():
+        fundraiser_id = fundraiser_id.replace('.0', '').zfill(5)
     fundraiser_name = fundraiser_data['Fundraiser Name'].iloc[0]
 
     # Determine month and year from calendar weeks
@@ -95,15 +98,18 @@ def generate_html_for_fundraiser(fundraiser_data, template_path, output_dir):
         # Generate rows HTML for this week
         rows_html = ""
         for row in week_rows:
-            # Convert points to German decimal format
+            # Convert points to German decimal format - ensure always visible
             try:
                 points_val = float(str(row['points']).replace(',', '.'))
                 points_str = str(points_val).replace('.', ',')
+                # Ensure points are never empty
+                if not points_str or points_str == '':
+                    points_str = "0,0"
             except (ValueError, TypeError):
                 points_str = "0,0"
 
-            # Ensure all values are strings
-            ref_id = str(row['Public RefID']) if pd.notna(row['Public RefID']) else ""
+            # Format values properly without unnecessary conversions
+            ref_id = str(row['Public RefID']).replace('.0', '') if pd.notna(row['Public RefID']) else ""
             age = str(int(float(row['Age']))) if pd.notna(row['Age']) else ""
             interval = str(row['Interval']) if pd.notna(row['Interval']) else ""
             amount = str(int(float(row['Amount Yearly']))) if pd.notna(row['Amount Yearly']) else ""
@@ -112,23 +118,17 @@ def generate_html_for_fundraiser(fundraiser_data, template_path, output_dir):
             rows_html += f'''
                         <tr>
                             <td><input type="text" value="{ref_id}" readonly></td>
-                            <td><input type="number" step="0.1" value="{age}" readonly></td>
-                            <td>
-                                <select disabled>
-                                    <option value="{interval}" selected>{interval}</option>
-                                </select>
-                            </td>
-                            <td><input type="number" step="0.1" value="{amount}" readonly></td>
-                            <td>
-                                <select disabled>
-                                    <option value="{status}" selected>{status}</option>
-                                </select>
-                            </td>
-                            <td><input type="number" step="0.5" value="{points_str}" class="points-input" readonly></td>
+                            <td><input type="text" value="{age}" readonly></td>
+                            <td><input type="text" value="{interval}" readonly></td>
+                            <td><input type="text" value="{amount}" readonly></td>
+                            <td><input type="text" value="{status}" readonly></td>
+                            <td><input type="text" value="{points_str}" readonly></td>
                         </tr>'''
 
-        # Generate week section HTML
+        # Generate week section HTML - ensure total points are visible
         total_points_str = str(total_points).replace('.', ',')
+        if not total_points_str or total_points_str == '':
+            total_points_str = "0,0"
 
         week_html = f'''
             <div class="week-section">
@@ -158,9 +158,7 @@ def generate_html_for_fundraiser(fundraiser_data, template_path, output_dir):
                     </div>
                     <div>
                         <label>Bonus gewährt:</label>
-                        <select disabled>
-                            <option value="{bonus_eligible}" selected>{"Ja" if bonus_eligible == "ja" else "Nein"}</option>
-                        </select>
+                        <input type="text" value="{"Ja" if bonus_eligible == "ja" else "Nein"}" readonly>
                     </div>
                 </div>
             </div>'''
