@@ -6,11 +6,11 @@ A cross-platform application for processing and visualizing fundraising realizat
 
 **Get the latest version for your operating system:**
 
-[![Download for Windows](https://img.shields.io/badge/Download-Windows-blue?style=for-the-badge&logo=windows)](https://github.com/YOUR_USERNAME/CW/releases/latest/download/Realisierungsdatenvisualizer-Windows.exe)
-[![Download for macOS](https://img.shields.io/badge/Download-macOS-lightgrey?style=for-the-badge&logo=apple)](https://github.com/YOUR_USERNAME/CW/releases/latest/download/Realisierungsdatenvisualizer-macOS)
-[![Download for Linux](https://img.shields.io/badge/Download-Linux-orange?style=for-the-badge&logo=linux)](https://github.com/YOUR_USERNAME/CW/releases/latest/download/Realisierungsdatenvisualizer-Linux)
+[![Download for Windows](https://img.shields.io/badge/Download-Windows-blue?style=for-the-badge&logo=windows)](../../releases/latest/download/Realisierungsdatenvisualizer-Windows.exe)
+[![Download for macOS](https://img.shields.io/badge/Download-macOS-lightgrey?style=for-the-badge&logo=apple)](../../releases/latest/download/Realisierungsdatenvisualizer-macOS)
+[![Download for Linux](https://img.shields.io/badge/Download-Linux-orange?style=for-the-badge&logo=linux)](../../releases/latest/download/Realisierungsdatenvisualizer-Linux)
 
-Or visit the [Releases page](https://github.com/YOUR_USERNAME/CW/releases) to download specific versions.
+Or visit the [Releases page](../../releases) to download specific versions.
 
 ## Features
 
@@ -51,7 +51,7 @@ Or visit the [Releases page](https://github.com/YOUR_USERNAME/CW/releases) to do
 ### Option 2: Run from Source
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/CW.git
+git clone <repository_url>
 cd CW
 
 # Install dependencies
@@ -180,7 +180,7 @@ CW/
 
 ### Getting Help
 
-1. Check the [Issues page](https://github.com/YOUR_USERNAME/CW/issues) for known problems
+1. Check the [Issues page](../../issues) for known problems
 2. Create a new issue with:
    - Your operating system and version
    - Error message (if any)
