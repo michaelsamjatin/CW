@@ -113,6 +113,7 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir):
     address_text = "Moselstraße 26 • 50674 Köln"
 
     content.append(Paragraph(header_text, header_style))
+    content.append(Spacer(1, 10))  # Add spacing between header and address
     content.append(Paragraph(address_text, address_style))
     content.append(HRFlowable(width="100%", thickness=2, color=colors.black))
     content.append(Spacer(1, 20))
@@ -126,7 +127,7 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir):
         ['Monat:', month, 'Jahr:', year]
     ]
 
-    info_table = Table(info_data, colWidths=[3*cm, 4*cm, 3*cm, 3*cm])
+    info_table = Table(info_data, colWidths=[2.5*cm, 4.5*cm, 3*cm, 3*cm])
     info_table.setStyle(TableStyle([
         ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
         ('FONTSIZE', (0, 0), (-1, -1), 12),
@@ -192,8 +193,8 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir):
             total_count = len(valid_rows)
             approved_count = (valid_rows['status_agency'].str.lower() == 'approved').sum()
 
-        # Create table
-        data_table = Table(table_data, colWidths=[3.5*cm, 2*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2*cm])
+        # Create table with properly balanced column widths
+        data_table = Table(table_data, colWidths=[2.5*cm, 1.4*cm, 2.0*cm, 3.0*cm, 2.0*cm, 1.6*cm])
         data_table.setStyle(TableStyle([
             # Header row
             ('BACKGROUND', (0, 0), (-1, 0), colors.white),
@@ -206,13 +207,16 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir):
             ('BACKGROUND', (0, 1), (-1, -1), colors.white),
             ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
             ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 10),
-            ('TOPPADDING', (0, 1), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('TOPPADDING', (0, 1), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
+            ('LEFTPADDING', (0, 0), (-1, -1), 3),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 3),
 
             # Grid
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ]))
 
         content.append(data_table)
@@ -226,7 +230,7 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir):
             [f'Punkte gesamt: {points_total_str}', f'Bonus gewährt: {bonus_granted}']
         ]
 
-        footer_table = Table(footer_data, colWidths=[8*cm, 6*cm])
+        footer_table = Table(footer_data, colWidths=[7*cm, 6*cm])
         footer_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 12),
