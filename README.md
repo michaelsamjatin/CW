@@ -7,7 +7,10 @@ A cross-platform application for processing and visualizing fundraising realizat
 **Get the latest version for your operating system:**
 
 [![Download for Windows](https://img.shields.io/badge/Download-Windows-blue?style=for-the-badge&logo=windows)](../../releases/latest/download/Realisierungsdatenvisualizer-Setup.exe)
-[![Download for macOS](https://img.shields.io/badge/Download-macOS-lightgrey?style=for-the-badge&logo=apple)](../../releases/latest/download/Realisierungsdatenvisualizer.dmg)
+
+**macOS Downloads:**
+[![Download for macOS Intel](https://img.shields.io/badge/Download-macOS%20Intel-lightgrey?style=for-the-badge&logo=apple)](../../releases/latest/download/Realisierungsdatenvisualizer-Intel.dmg)
+[![Download for macOS Apple Silicon](https://img.shields.io/badge/Download-macOS%20Apple%20Silicon-black?style=for-the-badge&logo=apple)](../../releases/latest/download/Realisierungsdatenvisualizer-AppleSilicon.dmg)
 
 Or visit the [Releases page](../../releases) to download specific versions.
 
@@ -44,7 +47,10 @@ Or visit the [Releases page](../../releases) to download specific versions.
 ### Option 1: Download Installer (Recommended)
 1. Download the appropriate installer for your operating system from the links above
 2. **Windows**: Run `Realisierungsdatenvisualizer-Setup.exe` and follow the installation wizard
-3. **macOS**: Open `Realisierungsdatenvisualizer.dmg` and drag the app to your Applications folder
+3. **macOS**:
+   - **Intel Macs**: Download and open `Realisierungsdatenvisualizer-Intel.dmg`
+   - **Apple Silicon Macs (M1/M2/M3)**: Download and open `Realisierungsdatenvisualizer-AppleSilicon.dmg`
+   - Drag the app to your Applications folder
 
 ### Option 2: Run from Source
 ```bash
@@ -134,10 +140,14 @@ CW/
 - 100MB free disk space
 
 ### macOS
-- macOS 10.13 (High Sierra) or later
-- Intel or Apple Silicon processor
+- **Intel Macs**: macOS 10.13 (High Sierra) or later
+- **Apple Silicon Macs**: macOS 11.0 (Big Sur) or later
 - 4GB RAM minimum
 - 100MB free disk space
+
+**Note**: Download the correct version for your Mac architecture:
+- Use Intel version for older Intel-based Macs
+- Use Apple Silicon version for M1, M2, M3 Macs
 
 
 ## Troubleshooting

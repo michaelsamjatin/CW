@@ -72,7 +72,68 @@ jobs:
         name: windows-installer
         path: dist/Realisierungsdatenvisualizer-Setup.exe
 
-  build-macos:
+  build-macos-intel:
+    runs-on: macos-13
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-macos.txt
+
+    - name: Test build requirements
+      run: |
+        python test_build.py
+
+    - name: Build macOS Intel app bundle
+      run: |
+        pyinstaller --windowed --name "Realisierungsdatenvisualizer" --add-data "realisierungsdaten.html:." --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy csv_formatter_gui.py
+        # Verify the app bundle was created
+        if [ -d "dist/Realisierungsdatenvisualizer.app" ]; then
+          echo "Intel app bundle created successfully"
+          ls -la dist/Realisierungsdatenvisualizer.app
+        else
+          echo "Error: Intel app bundle was not created"
+          exit 1
+        fi
+
+    - name: Install create-dmg
+      run: |
+        brew install create-dmg
+
+    - name: Create Intel DMG installer
+      run: |
+        create-dmg \
+          --volname "Realisierungsdatenvisualizer Intel" \
+          --volicon "logo.png" \
+          --window-pos 200 120 \
+          --window-size 600 300 \
+          --icon-size 100 \
+          --icon "Realisierungsdatenvisualizer.app" 175 120 \
+          --hide-extension "Realisierungsdatenvisualizer.app" \
+          --app-drop-link 425 120 \
+          "dist/Realisierungsdatenvisualizer-Intel.dmg" \
+          "dist/Realisierungsdatenvisualizer.app" || true
+
+        # If create-dmg fails, create a simple DMG
+        if [ ! -f "dist/Realisierungsdatenvisualizer-Intel.dmg" ]; then
+          echo "create-dmg failed, creating simple Intel DMG..."
+          hdiutil create -volname "Realisierungsdatenvisualizer Intel" -srcfolder "dist/Realisierungsdatenvisualizer.app" -ov -format UDZO "dist/Realisierungsdatenvisualizer-Intel.dmg"
+        fi
+
+    - name: Upload macOS Intel DMG artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-intel-dmg
+        path: dist/Realisierungsdatenvisualizer-Intel.dmg
+
+  build-macos-apple-silicon:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
@@ -91,15 +152,15 @@ jobs:
       run: |
         python test_build.py
 
-    - name: Build macOS app bundle
+    - name: Build macOS Apple Silicon app bundle
       run: |
         pyinstaller --windowed --name "Realisierungsdatenvisualizer" --add-data "realisierungsdaten.html:." --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy csv_formatter_gui.py
         # Verify the app bundle was created
         if [ -d "dist/Realisierungsdatenvisualizer.app" ]; then
-          echo "App bundle created successfully"
+          echo "Apple Silicon app bundle created successfully"
           ls -la dist/Realisierungsdatenvisualizer.app
         else
-          echo "Error: App bundle was not created"
+          echo "Error: Apple Silicon app bundle was not created"
           exit 1
         fi
 
@@ -107,10 +168,10 @@ jobs:
       run: |
         brew install create-dmg
 
-    - name: Create DMG installer
+    - name: Create Apple Silicon DMG installer
       run: |
         create-dmg \
-          --volname "Realisierungsdatenvisualizer" \
+          --volname "Realisierungsdatenvisualizer Apple Silicon" \
           --volicon "logo.png" \
           --window-pos 200 120 \
           --window-size 600 300 \
@@ -118,24 +179,24 @@ jobs:
           --icon "Realisierungsdatenvisualizer.app" 175 120 \
           --hide-extension "Realisierungsdatenvisualizer.app" \
           --app-drop-link 425 120 \
-          "dist/Realisierungsdatenvisualizer.dmg" \
+          "dist/Realisierungsdatenvisualizer-AppleSilicon.dmg" \
           "dist/Realisierungsdatenvisualizer.app" || true
 
         # If create-dmg fails, create a simple DMG
-        if [ ! -f "dist/Realisierungsdatenvisualizer.dmg" ]; then
-          echo "create-dmg failed, creating simple DMG..."
-          hdiutil create -volname "Realisierungsdatenvisualizer" -srcfolder "dist/Realisierungsdatenvisualizer.app" -ov -format UDZO "dist/Realisierungsdatenvisualizer.dmg"
+        if [ ! -f "dist/Realisierungsdatenvisualizer-AppleSilicon.dmg" ]; then
+          echo "create-dmg failed, creating simple Apple Silicon DMG..."
+          hdiutil create -volname "Realisierungsdatenvisualizer Apple Silicon" -srcfolder "dist/Realisierungsdatenvisualizer.app" -ov -format UDZO "dist/Realisierungsdatenvisualizer-AppleSilicon.dmg"
         fi
 
-    - name: Upload macOS DMG artifact
+    - name: Upload macOS Apple Silicon DMG artifact
       uses: actions/upload-artifact@v4
       with:
-        name: macos-dmg
-        path: dist/Realisierungsdatenvisualizer.dmg
+        name: macos-apple-silicon-dmg
+        path: dist/Realisierungsdatenvisualizer-AppleSilicon.dmg
 
 
   release:
-    needs: [build-windows, build-macos]
+    needs: [build-windows, build-macos-intel, build-macos-apple-silicon]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
     permissions:
@@ -163,8 +224,11 @@ jobs:
         echo "Copying Windows installer..."
         cp windows-installer/Realisierungsdatenvisualizer-Setup.exe release-assets/Realisierungsdatenvisualizer-Setup.exe
 
-        echo "Copying macOS DMG..."
-        cp macos-dmg/Realisierungsdatenvisualizer.dmg release-assets/Realisierungsdatenvisualizer.dmg
+        echo "Copying macOS Intel DMG..."
+        cp macos-intel-dmg/Realisierungsdatenvisualizer-Intel.dmg release-assets/Realisierungsdatenvisualizer-Intel.dmg
+
+        echo "Copying macOS Apple Silicon DMG..."
+        cp macos-apple-silicon-dmg/Realisierungsdatenvisualizer-AppleSilicon.dmg release-assets/Realisierungsdatenvisualizer-AppleSilicon.dmg
 
         # List files for debugging
         echo "Release assets created:"
