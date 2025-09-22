@@ -180,21 +180,27 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir):
             ages = valid_rows['Age'].fillna(0).astype(int).astype(str)
             intervals = valid_rows['Interval'].fillna('').astype(str)
             amounts = valid_rows['Amount Yearly'].fillna(0).astype(int).astype(str)
-            statuses = valid_rows['status_agency'].fillna('').astype(str)
+            statuses = valid_rows['status_agency'].fillna('').astype(str).str.replace('conditionally-approved', 'conditionally-\napproved')
             points = valid_rows['points'].fillna(0).astype(str).str.replace('.', ',')
 
-            # Build table data efficiently
+            # Build table data efficiently with proper text wrapping for status
             for i in range(len(valid_rows)):
+                status_text = statuses.iloc[i]
+                if '\n' in status_text:
+                    status_cell = Paragraph(status_text.replace('\n', '<br/>'), styles['Normal'])
+                else:
+                    status_cell = status_text
+
                 table_data.append([ref_ids.iloc[i], ages.iloc[i], intervals.iloc[i],
-                                 amounts.iloc[i], statuses.iloc[i], points.iloc[i]])
+                                 amounts.iloc[i], status_cell, points.iloc[i]])
 
             # Calculate totals efficiently
             total_points = valid_rows['points'].fillna(0).sum()
             total_count = len(valid_rows)
             approved_count = (valid_rows['status_agency'].str.lower() == 'approved').sum()
 
-        # Create table with properly balanced column widths
-        data_table = Table(table_data, colWidths=[2.5*cm, 1.4*cm, 2.0*cm, 3.0*cm, 2.0*cm, 1.6*cm])
+        # Create table with properly balanced column widths (wider Status column)
+        data_table = Table(table_data, colWidths=[2.5*cm, 1.4*cm, 2.0*cm, 2.8*cm, 2.3*cm, 1.6*cm])
         data_table.setStyle(TableStyle([
             # Header row
             ('BACKGROUND', (0, 0), (-1, 0), colors.white),
@@ -280,10 +286,15 @@ def generate_all_pdf_files(csv_file_path, output_dir=None):
     ]
 
     # Pre-process common data types for better performance
-    numeric_columns = ['Public RefID', 'Age', 'Amount Yearly', 'points']
+    numeric_columns = ['Public RefID', 'Age', 'Amount Yearly']
     for col in numeric_columns:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    # Handle points column with comma decimal separator
+    if 'points' in df.columns:
+        df['points'] = df['points'].astype(str).str.replace(',', '.', regex=False)
+        df['points'] = pd.to_numeric(df['points'], errors='coerce')
 
     # Get unique fundraisers
     fundraisers = df.groupby(['Fundraiser ID', 'Fundraiser Name'])
