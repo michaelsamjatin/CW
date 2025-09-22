@@ -72,8 +72,8 @@ python csv_formatter_gui.py
 2. **Drag & Drop** your CSV file into the application window, or click to browse
 3. **Wait** for processing to complete
 4. **View Results**:
-   - Formatted CSV file will be saved in the same directory
-   - HTML files will be generated in the `html_output/` folder
+   - Formatted CSV file will be saved in the same directory as your input file
+   - HTML files will be generated in a `html_output/` folder next to your input file
 
 ### Input File Format
 Your CSV should contain these columns:

@@ -210,18 +210,23 @@ def generate_html_for_fundraiser(fundraiser_data, template_path, output_dir):
 
     return output_path
 
-def generate_all_html_files(csv_file_path, template_path, output_dir="html_output"):
+def generate_all_html_files(csv_file_path, template_path, output_dir=None):
     """
     Generate HTML files for all fundraisers from formatted CSV.
 
     Args:
         csv_file_path: Path to the formatted CSV file
         template_path: Path to the HTML template
-        output_dir: Directory to save HTML files
+        output_dir: Directory to save HTML files (defaults to html_output next to CSV file)
 
     Returns:
         List of generated HTML file paths
     """
+    # If no output directory specified, create one next to the CSV file
+    if output_dir is None:
+        csv_dir = os.path.dirname(os.path.abspath(csv_file_path))
+        output_dir = os.path.join(csv_dir, "html_output")
+
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
 

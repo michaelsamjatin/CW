@@ -262,7 +262,11 @@ def format_csv(input_file, output_file, generate_html=True, html_template_path="
         try:
             print("\nGenerating HTML files for each fundraiser...")
             html_files = generate_all_html_files(output_file, html_template_path)
-            print(f"Generated {len(html_files)} HTML files in 'html_output' directory")
+            if html_files:
+                html_dir = os.path.dirname(html_files[0])
+                print(f"Generated {len(html_files)} HTML files in '{html_dir}' directory")
+            else:
+                print("No HTML files were generated")
         except Exception as e:
             print(f"Error generating HTML files: {e}")
     elif generate_html:

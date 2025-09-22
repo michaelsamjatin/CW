@@ -224,7 +224,10 @@ class CSVFormatterApp:
         # Add HTML generation info if applicable
         if 'html_files' in result and result['html_files']:
             success_msg += f"\n\nHTML files generated: {len(result['html_files'])}"
-            success_msg += f"\nLocation: html_output/"
+            # Show the actual HTML output directory path
+            if result['html_files']:
+                html_dir = os.path.dirname(result['html_files'][0])
+                success_msg += f"\nLocation: {html_dir}"
 
         messagebox.showinfo("Success", success_msg)
     
