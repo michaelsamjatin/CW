@@ -112,7 +112,7 @@ def calculate_bonus_eligibility(fundraiser_data):
     approval_rate = approved_donors / total_donors
     return 'eligible' if approval_rate >= 0.7 else 'not-eligible'
 
-def format_csv(input_file, output_file, generate_pdf=True):
+def format_csv(input_file, output_file, generate_pdf=True, pdf_output_dir=None):
     """
     Main function to reformat the CSV according to specifications and optionally generate PDF files.
 
@@ -120,6 +120,7 @@ def format_csv(input_file, output_file, generate_pdf=True):
         input_file: Path to input CSV file
         output_file: Path to output CSV file
         generate_pdf: Whether to generate PDF files for each fundraiser
+        pdf_output_dir: Custom directory for PDF output (optional)
 
     Returns:
         dict: Summary of processing results
@@ -272,7 +273,7 @@ def format_csv(input_file, output_file, generate_pdf=True):
     if generate_pdf:
         try:
             print("\nGenerating PDF files for each fundraiser...")
-            pdf_files = generate_all_pdf_files(output_file)
+            pdf_files = generate_all_pdf_files(output_file, pdf_output_dir)
             if pdf_files:
                 pdf_dir = os.path.dirname(pdf_files[0])
                 print(f"Generated {len(pdf_files)} PDF files in '{pdf_dir}' directory")
@@ -288,8 +289,36 @@ def format_csv(input_file, output_file, generate_pdf=True):
     }
 
 if __name__ == "__main__":
-    # Usage
-    input_file = "KW18_Bis_KW22_WoVi_CW_Final_2025-0_1753881139314(1).csv"
-    output_file = "formatted_output.csv"
-    
-    format_csv(input_file, output_file)
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Process and format CSV fundraising data')
+    parser.add_argument('input_file', help='Input CSV file path')
+    parser.add_argument('output_file', nargs='?', default=None,
+                       help='Output CSV file path (optional, defaults to input_formatted.csv)')
+    parser.add_argument('--pdf-dir', '-p', dest='pdf_output_dir',
+                       help='Custom directory for PDF output')
+    parser.add_argument('--no-pdf', action='store_true',
+                       help='Skip PDF generation')
+
+    args = parser.parse_args()
+
+    # If no output file specified, generate one based on input file
+    if args.output_file is None:
+        input_dir = os.path.dirname(os.path.abspath(args.input_file))
+        input_name = os.path.splitext(os.path.basename(args.input_file))[0]
+        args.output_file = os.path.join(input_dir, f"{input_name}_formatted.csv")
+
+    result = format_csv(
+        args.input_file,
+        args.output_file,
+        generate_pdf=not args.no_pdf,
+        pdf_output_dir=args.pdf_output_dir
+    )
+
+    print(f"\nProcessing complete!")
+    print(f"CSV rows processed: {result['csv_rows']}")
+    print(f"Output CSV: {result['csv_path']}")
+    if result['pdf_files']:
+        print(f"PDF files generated: {len(result['pdf_files'])}")
+        pdf_dir = os.path.dirname(result['pdf_files'][0])
+        print(f"PDF directory: {pdf_dir}")

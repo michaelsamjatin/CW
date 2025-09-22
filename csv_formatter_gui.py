@@ -54,6 +54,7 @@ class CSVFormatterApp:
         self._center_window()
         
         self.input_file = None
+        self.output_dir = None
         self.setup_ui()
     
     def _setup_platform_specific(self):
@@ -126,10 +127,47 @@ class CSVFormatterApp:
         self.drop_label.bind("<Button-1>", self.browse_file)
         
         # File info label
-        self.file_info_label = tk.Label(self.root, text="No file selected", 
-                                       font=("Helvetica", 10), 
+        self.file_info_label = tk.Label(self.root, text="No file selected",
+                                       font=("Helvetica", 10),
                                        bg="#f0f0f0", fg="#7f8c8d")
-        self.file_info_label.pack(pady=(10, 20))
+        self.file_info_label.pack(pady=(10, 10))
+
+        # Output directory selection
+        output_frame = tk.Frame(self.root, bg="#f0f0f0")
+        output_frame.pack(pady=(0, 20), padx=40, fill="x")
+
+        output_label = tk.Label(output_frame, text="Output Directory:",
+                               font=("Helvetica", 11, "bold"),
+                               bg="#f0f0f0", fg="#2c3e50")
+        output_label.pack(anchor="w")
+
+        output_dir_frame = tk.Frame(output_frame, bg="#f0f0f0")
+        output_dir_frame.pack(fill="x", pady=(5, 0))
+
+        self.output_dir_var = tk.StringVar()
+        self.output_dir_var.set("pdf_output (default)")
+
+        self.output_entry = tk.Entry(output_dir_frame, textvariable=self.output_dir_var,
+                                    font=("Helvetica", 10), width=40,
+                                    bg="white", fg="#2c3e50")
+        self.output_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+
+        self.browse_output_btn = tk.Button(output_dir_frame, text="Browse",
+                                          font=("Helvetica", 10),
+                                          bg="#95a5a6", fg="white",
+                                          padx=15, pady=5,
+                                          command=self.browse_output_dir,
+                                          cursor="hand2")
+        self.browse_output_btn.pack(side="right")
+
+        # Clear button for output directory
+        self.clear_output_btn = tk.Button(output_dir_frame, text="Default",
+                                         font=("Helvetica", 10),
+                                         bg="#e67e22", fg="white",
+                                         padx=15, pady=5,
+                                         command=self.reset_output_dir,
+                                         cursor="hand2")
+        self.clear_output_btn.pack(side="right", padx=(0, 5))
         
         # Progress bar (initially hidden)
         self.progress_var = tk.DoubleVar()
@@ -179,10 +217,22 @@ class CSVFormatterApp:
         self.input_file = file_path
         filename = os.path.basename(file_path)
         self.file_info_label.config(text=f"Selected: {filename}", fg="#27ae60")
-        self.drop_label.config(text=f"✓ {filename}\n\nClick to select a different file", 
+        self.drop_label.config(text=f"✓ {filename}\n\nClick to select a different file",
                               fg="#27ae60")
         self.process_btn.config(state="normal", bg="#27ae60")
         self.status_label.config(text="File ready for processing", fg="#27ae60")
+
+    def browse_output_dir(self):
+        directory = filedialog.askdirectory(
+            title="Select Output Directory for PDF Files"
+        )
+        if directory:
+            self.output_dir = directory
+            self.output_dir_var.set(directory)
+
+    def reset_output_dir(self):
+        self.output_dir = None
+        self.output_dir_var.set("pdf_output (default)")
     
     def show_processing(self):
         self.progress_bar.pack(pady=(0, 10))
@@ -210,17 +260,27 @@ class CSVFormatterApp:
     def run_processing(self):
         try:
             self.root.after(0, self.show_processing)
-            
+
             # Get output filename (Windows-safe path handling)
             input_dir = os.path.dirname(self.input_file)
             input_name = os.path.splitext(os.path.basename(self.input_file))[0]
             output_file = os.path.normpath(os.path.join(input_dir, f"{input_name}_formatted.csv"))
-            
+
+            # Determine PDF output directory
+            pdf_output_dir = None
+            if self.output_dir:
+                pdf_output_dir = self.output_dir
+            else:
+                # Use directory name from entry field if it's not the default
+                dir_name = self.output_dir_var.get().strip()
+                if dir_name and dir_name != "pdf_output (default)":
+                    pdf_output_dir = os.path.join(input_dir, dir_name)
+
             # Process the file
-            result = self.format_csv(self.input_file, output_file)
-            
+            result = self.format_csv(self.input_file, output_file, pdf_output_dir)
+
             self.root.after(0, lambda: self.processing_complete(result, output_file))
-            
+
         except Exception as e:
             self.root.after(0, lambda: self.processing_error(str(e)))
     
@@ -313,7 +373,7 @@ class CSVFormatterApp:
         approval_rate = approved_donors / total_donors
         return 'eligible' if approval_rate >= 0.7 else 'not-eligible'
     
-    def format_csv(self, input_file, output_file):
+    def format_csv(self, input_file, output_file, pdf_output_dir=None):
         # Handle file path encoding issues on Windows and other platforms
         encodings = ['utf-8-sig', 'utf-8', 'cp1252', 'iso-8859-1', 'latin1']
         df = None
@@ -467,7 +527,7 @@ class CSVFormatterApp:
         pdf_files = []
         try:
             from pdf_generator import generate_all_pdf_files
-            pdf_files = generate_all_pdf_files(output_file)
+            pdf_files = generate_all_pdf_files(output_file, pdf_output_dir)
             print(f"Generated {len(pdf_files)} PDF files")
         except Exception as e:
             print(f"Error generating PDF files: {e}")

@@ -170,23 +170,27 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir):
         approved_count = 0
         total_count = 0
 
-        for _, row in week_data.iterrows():
-            if pd.notna(row.get('Public RefID')):
-                ref_id = str(int(row['Public RefID'])) if pd.notna(row['Public RefID']) else ""
-                age = str(int(row['Age'])) if pd.notna(row['Age']) else ""
-                interval = str(row['Interval']) if pd.notna(row['Interval']) else ""
-                amount = str(int(row['Amount Yearly'])) if pd.notna(row['Amount Yearly']) else ""
-                status = str(row['status_agency']) if pd.notna(row['status_agency']) else ""
-                points = str(row['Points']).replace('.', ',') if pd.notna(row['Points']) else "0"
+        # Filter valid rows once for better performance
+        valid_rows = week_data[week_data['Public RefID'].notna()]
 
-                table_data.append([ref_id, age, interval, amount, status, points])
+        if not valid_rows.empty:
+            # Vectorized operations for better performance
+            ref_ids = valid_rows['Public RefID'].fillna(0).astype(int).astype(str)
+            ages = valid_rows['Age'].fillna(0).astype(int).astype(str)
+            intervals = valid_rows['Interval'].fillna('').astype(str)
+            amounts = valid_rows['Amount Yearly'].fillna(0).astype(int).astype(str)
+            statuses = valid_rows['status_agency'].fillna('').astype(str)
+            points = valid_rows['points'].fillna(0).astype(str).str.replace('.', ',')
 
-                # Calculate totals
-                if pd.notna(row['Points']):
-                    total_points += float(row['Points'])
-                total_count += 1
-                if str(row['status_agency']).lower() == 'approved':
-                    approved_count += 1
+            # Build table data efficiently
+            for i in range(len(valid_rows)):
+                table_data.append([ref_ids.iloc[i], ages.iloc[i], intervals.iloc[i],
+                                 amounts.iloc[i], statuses.iloc[i], points.iloc[i]])
+
+            # Calculate totals efficiently
+            total_points = valid_rows['points'].fillna(0).sum()
+            total_count = len(valid_rows)
+            approved_count = (valid_rows['status_agency'].str.lower() == 'approved').sum()
 
         # Create table
         data_table = Table(table_data, colWidths=[3.5*cm, 2*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2*cm])
@@ -257,31 +261,43 @@ def generate_all_pdf_files(csv_file_path, output_dir=None):
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
 
+    print("Reading and preprocessing CSV data...")
     # Read the formatted CSV
     df = pd.read_csv(csv_file_path, sep=';', encoding='utf-8-sig', skiprows=2)
 
     # Clean column names
     df.columns = df.columns.str.strip()
 
-    # Filter out subtotal rows and empty rows
-    df = df[df['Public RefID'].notna()]
-    df = df[df['Public RefID'] != '']
-    df = df[~df['Public RefID'].astype(str).str.contains('Total:', na=False)]
+    # Filter out subtotal rows and empty rows - optimize filtering
+    df = df[
+        df['Public RefID'].notna() &
+        (df['Public RefID'] != '') &
+        (~df['Public RefID'].astype(str).str.contains('Total:', na=False))
+    ]
+
+    # Pre-process common data types for better performance
+    numeric_columns = ['Public RefID', 'Age', 'Amount Yearly', 'points']
+    for col in numeric_columns:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
 
     # Get unique fundraisers
     fundraisers = df.groupby(['Fundraiser ID', 'Fundraiser Name'])
+    total_fundraisers = len(fundraisers)
+    print(f"Processing {total_fundraisers} fundraisers...")
 
     generated_files = []
 
-    for (fundraiser_id, fundraiser_name), fundraiser_data in fundraisers:
+    for i, ((fundraiser_id, fundraiser_name), fundraiser_data) in enumerate(fundraisers, 1):
         try:
-            print(f"Generating PDF for {fundraiser_name} (ID: {fundraiser_id})...")
+            print(f"[{i}/{total_fundraisers}] Generating PDF for {fundraiser_name} (ID: {fundraiser_id})...")
             pdf_path = generate_pdf_for_fundraiser(fundraiser_data, output_dir)
             generated_files.append(pdf_path)
             print(f"✓ Generated: {os.path.basename(pdf_path)}")
         except Exception as e:
             print(f"✗ Error generating PDF for {fundraiser_name}: {e}")
 
+    print(f"Completed! Generated {len(generated_files)} PDF files.")
     return generated_files
 
 if __name__ == "__main__":
