@@ -232,13 +232,13 @@ class CSVFormatterApp:
         # Generate success message
         success_msg = f"CSV processed successfully!\n\nRows processed: {result['rows']}\nOutput saved to: {os.path.basename(output_file)}"
 
-        # Add HTML generation info if applicable
-        if 'html_files' in result and result['html_files']:
-            success_msg += f"\n\nHTML files generated: {len(result['html_files'])}"
-            # Show the actual HTML output directory path
-            if result['html_files']:
-                html_dir = os.path.dirname(result['html_files'][0])
-                success_msg += f"\nLocation: {html_dir}"
+        # Add PDF generation info if applicable
+        if 'pdf_files' in result and result['pdf_files']:
+            success_msg += f"\n\nPDF files generated: {len(result['pdf_files'])}"
+            # Show the actual PDF output directory path
+            if result['pdf_files']:
+                pdf_dir = os.path.dirname(result['pdf_files'][0])
+                success_msg += f"\nLocation: {pdf_dir}"
 
         messagebox.showinfo("Success", success_msg)
     
@@ -463,23 +463,16 @@ class CSVFormatterApp:
                             row_values.append(str(value))
                 f.write(';'.join(row_values) + '\n')
         
-        # Generate HTML files if template exists
-        html_files = []
-        template_path = get_resource_path("realisierungsdaten.html")
-        print(f"Looking for HTML template at: {template_path}")
-        print(f"Template exists: {os.path.exists(template_path)}")
+        # Generate PDF files
+        pdf_files = []
+        try:
+            from pdf_generator import generate_all_pdf_files
+            pdf_files = generate_all_pdf_files(output_file)
+            print(f"Generated {len(pdf_files)} PDF files")
+        except Exception as e:
+            print(f"Error generating PDF files: {e}")
 
-        if os.path.exists(template_path):
-            try:
-                from html_generator import generate_all_html_files
-                html_files = generate_all_html_files(output_file, template_path)
-                print(f"Generated {len(html_files)} HTML files")
-            except Exception as e:
-                print(f"Error generating HTML files: {e}")
-        else:
-            print(f"HTML template not found at {template_path}. Skipping HTML generation.")
-
-        return {"rows": len(final_df), "html_files": html_files}
+        return {"rows": len(final_df), "pdf_files": pdf_files}
     
     def run(self):
         self.root.mainloop()

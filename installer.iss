@@ -28,7 +28,6 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "dist\Realisierungsdatenvisualizer.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "realisierungsdaten.html"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\Realisierungsdatenvisualizer"; Filename: "{app}\Realisierungsdatenvisualizer.exe"

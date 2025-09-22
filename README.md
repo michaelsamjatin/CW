@@ -1,6 +1,6 @@
 # Realisierungsdatenvisualizer
 
-A cross-platform application for processing and visualizing fundraising realization data. Automatically calculates points based on donor demographics and generates individual HTML reports for each fundraiser.
+A cross-platform application for processing and visualizing fundraising realization data. Automatically calculates points based on donor demographics and generates individual PDF reports for each fundraiser.
 
 ## Download
 
@@ -19,7 +19,7 @@ Or visit the [Releases page](../../releases) to download specific versions.
 ### Core Functionality
 - **CSV Processing**: Import and format fundraising data with automatic validation
 - **Point Calculation**: Sophisticated scoring system based on donor age, donation interval, and amount
-- **HTML Generation**: Individual reports for each fundraiser with weekly breakdowns
+- **PDF Generation**: Professional individual reports for each fundraiser with weekly breakdowns
 - **Cross-Platform**: Runs on Windows 10+, macOS 10.13+, and major Linux distributions
 
 ### Point Calculation Rules
@@ -39,7 +39,7 @@ Or visit the [Releases page](../../releases) to download specific versions.
 
 ### Output Formats
 - **Formatted CSV**: Sorted by calendar week and fundraiser with automatic subtotals
-- **HTML Reports**: Individual files for each fundraiser with complete donor breakdowns
+- **PDF Reports**: Professional individual files for each fundraiser with complete donor breakdowns
 - **Weekly Summaries**: Point totals and bonus eligibility per calendar week
 
 ## Quick Start
@@ -73,7 +73,7 @@ python csv_formatter_gui.py
 3. **Wait** for processing to complete
 4. **View Results**:
    - Formatted CSV file will be saved in the same directory as your input file
-   - HTML files will be generated in a `html_output/` folder next to your input file
+   - PDF files will be generated in a `pdf_output/` folder next to your input file
 
 ### Input File Format
 Your CSV should contain these columns:
@@ -120,8 +120,7 @@ create-dmg "Realisierungsdatenvisualizer.dmg" "dist/Realisierungsdatenvisualizer
 CW/
 ├── csv_formatter_gui.py          # Main GUI application
 ├── csv_formatter.py              # Core processing logic
-├── html_generator.py             # HTML report generation
-├── realisierungsdaten.html       # HTML template
+├── pdf_generator.py              # PDF report generation
 ├── requirements.txt              # Base dependencies
 ├── requirements-windows.txt      # Windows-specific deps
 ├── requirements-macos.txt        # macOS-specific deps

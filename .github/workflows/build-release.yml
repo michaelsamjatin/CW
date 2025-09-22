@@ -37,7 +37,7 @@ jobs:
 
     - name: Build Windows executable
       run: |
-        pyinstaller --onefile --windowed --name "Realisierungsdatenvisualizer" --add-data "realisierungsdaten.html;." --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy csv_formatter_gui.py
+        pyinstaller --onefile --windowed --name "Realisierungsdatenvisualizer" --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy --hidden-import=reportlab csv_formatter_gui.py
         # Verify the executable was created
         if (Test-Path "dist/Realisierungsdatenvisualizer.exe") {
           Write-Host "Executable created successfully"
@@ -93,7 +93,7 @@ jobs:
 
     - name: Build macOS Intel app bundle
       run: |
-        pyinstaller --windowed --name "Realisierungsdatenvisualizer" --add-data "realisierungsdaten.html:." --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy csv_formatter_gui.py
+        pyinstaller --windowed --name "Realisierungsdatenvisualizer" --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy --hidden-import=reportlab csv_formatter_gui.py
         # Verify the app bundle was created
         if [ -d "dist/Realisierungsdatenvisualizer.app" ]; then
           echo "Intel app bundle created successfully"
@@ -154,7 +154,7 @@ jobs:
 
     - name: Build macOS Apple Silicon app bundle
       run: |
-        pyinstaller --windowed --name "Realisierungsdatenvisualizer" --add-data "realisierungsdaten.html:." --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy csv_formatter_gui.py
+        pyinstaller --windowed --name "Realisierungsdatenvisualizer" --hidden-import=tkinterdnd2 --hidden-import=pandas --hidden-import=numpy --hidden-import=reportlab csv_formatter_gui.py
         # Verify the app bundle was created
         if [ -d "dist/Realisierungsdatenvisualizer.app" ]; then
           echo "Apple Silicon app bundle created successfully"
