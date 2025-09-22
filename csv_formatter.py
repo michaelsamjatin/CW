@@ -2,7 +2,19 @@ import pandas as pd
 import numpy as np
 from collections import defaultdict
 import os
+import sys
 from html_generator import generate_all_html_files
+
+def get_resource_path(relative_path):
+    """Get absolute path to resource, works for dev and PyInstaller bundle"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except AttributeError:
+        # We are in development mode
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 def calculate_points(age, interval, amount_yearly):
     """
@@ -100,7 +112,7 @@ def calculate_bonus_eligibility(fundraiser_data):
     approval_rate = approved_donors / total_donors
     return 'eligible' if approval_rate >= 0.7 else 'not-eligible'
 
-def format_csv(input_file, output_file, generate_html=True, html_template_path="realisierungsdaten.html"):
+def format_csv(input_file, output_file, generate_html=True, html_template_path=None):
     """
     Main function to reformat the CSV according to specifications and optionally generate HTML files.
 
@@ -258,19 +270,24 @@ def format_csv(input_file, output_file, generate_html=True, html_template_path="
 
     # Generate HTML files if requested
     html_files = []
-    if generate_html and os.path.exists(html_template_path):
-        try:
-            print("\nGenerating HTML files for each fundraiser...")
-            html_files = generate_all_html_files(output_file, html_template_path)
-            if html_files:
-                html_dir = os.path.dirname(html_files[0])
-                print(f"Generated {len(html_files)} HTML files in '{html_dir}' directory")
-            else:
-                print("No HTML files were generated")
-        except Exception as e:
-            print(f"Error generating HTML files: {e}")
-    elif generate_html:
-        print(f"Warning: HTML template not found at {html_template_path}. Skipping HTML generation.")
+    if generate_html:
+        # Use default template path if none provided
+        if html_template_path is None:
+            html_template_path = get_resource_path("realisierungsdaten.html")
+
+        if os.path.exists(html_template_path):
+            try:
+                print("\nGenerating HTML files for each fundraiser...")
+                html_files = generate_all_html_files(output_file, html_template_path)
+                if html_files:
+                    html_dir = os.path.dirname(html_files[0])
+                    print(f"Generated {len(html_files)} HTML files in '{html_dir}' directory")
+                else:
+                    print("No HTML files were generated")
+            except Exception as e:
+                print(f"Error generating HTML files: {e}")
+        else:
+            print(f"Warning: HTML template not found at {html_template_path}. Skipping HTML generation.")
 
     return {
         "csv_rows": len(final_df),

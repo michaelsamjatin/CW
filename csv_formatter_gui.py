@@ -10,6 +10,17 @@ import platform
 import sys
 import tempfile
 
+def get_resource_path(relative_path):
+    """Get absolute path to resource, works for dev and PyInstaller bundle"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except AttributeError:
+        # We are in development mode
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 # Platform-specific imports
 try:
     from tkinterdnd2 import DND_FILES, TkinterDnD
@@ -454,13 +465,19 @@ class CSVFormatterApp:
         
         # Generate HTML files if template exists
         html_files = []
-        template_path = "realisierungsdaten.html"
+        template_path = get_resource_path("realisierungsdaten.html")
+        print(f"Looking for HTML template at: {template_path}")
+        print(f"Template exists: {os.path.exists(template_path)}")
+
         if os.path.exists(template_path):
             try:
                 from html_generator import generate_all_html_files
                 html_files = generate_all_html_files(output_file, template_path)
+                print(f"Generated {len(html_files)} HTML files")
             except Exception as e:
                 print(f"Error generating HTML files: {e}")
+        else:
+            print(f"HTML template not found at {template_path}. Skipping HTML generation.")
 
         return {"rows": len(final_df), "html_files": html_files}
     
