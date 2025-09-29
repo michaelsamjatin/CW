@@ -42,20 +42,28 @@ class CSVFormatterApp:
             self.root = TkinterDnD.Tk()
         else:
             self.root = tk.Tk()
-            
+
         self.root.title("Realisierungsdatenvisualizer")
         self.root.geometry("600x500")
-        self.root.configure(bg="#f0f0f0")
-        
+
+        # Initialize dark mode
+        self.dark_mode = tk.BooleanVar()
+        self.dark_mode.set(False)
+        self.dark_mode.trace('w', self.toggle_theme)
+
+        # Apply initial theme
+        self.apply_theme()
+
         # Platform-specific window setup
         self._setup_platform_specific()
-        
+
         # Center the window
         self._center_window()
-        
+
         self.input_file = None
         self.output_dir = None
-        self.weekly_team_leaders = {}  # Store TL selections per week: {week: {fundraiser: working_days}}
+        self.weekly_team_leaders = {}  # Store TL selections per week: {week: {tl_name: working_days}}
+        self.weekly_team_assignments = {}  # Store team assignments per week: {week: {tl_name: [team_member_names]}}
         self.fundraiser_working_days = {}  # Store working days for all fundraisers per week
         self.setup_ui()
     
@@ -92,33 +100,117 @@ class CSVFormatterApp:
             x = (self.root.winfo_screenwidth() - self.root.winfo_width()) // 2
             y = (self.root.winfo_screenheight() - self.root.winfo_height()) // 2
             self.root.geometry(f"+{x}+{y}")
-        
+
+    def apply_theme(self):
+        """Apply current theme colors to the app."""
+        if self.dark_mode.get():
+            # Dark mode colors
+            self.colors = {
+                'bg': '#2b2b2b',
+                'fg': '#ffffff',
+                'bg_secondary': '#3c3c3c',
+                'fg_secondary': '#cccccc',
+                'accent': '#4a9eff',
+                'success': '#4caf50',
+                'warning': '#ff9800',
+                'error': '#f44336',
+                'button': '#404040',
+                'button_hover': '#505050',
+                'entry': '#404040',
+                'drop_zone': '#353535'
+            }
+        else:
+            # Light mode colors (original)
+            self.colors = {
+                'bg': '#f0f0f0',
+                'fg': '#2c3e50',
+                'bg_secondary': '#ecf0f1',
+                'fg_secondary': '#7f8c8d',
+                'accent': '#3498db',
+                'success': '#27ae60',
+                'warning': '#f39c12',
+                'error': '#e74c3c',
+                'button': '#95a5a6',
+                'button_hover': '#34495e',
+                'entry': 'white',
+                'drop_zone': '#ecf0f1'
+            }
+
+        self.root.configure(bg=self.colors['bg'])
+
+    def toggle_theme(self, *args):
+        """Toggle between light and dark mode."""
+        self.apply_theme()
+        # Refresh UI with new colors
+        if hasattr(self, 'title_label'):
+            self.refresh_ui_colors()
+
+    def refresh_ui_colors(self):
+        """Refresh all UI elements with current theme colors."""
+        # Update all widgets with new colors
+        widgets_to_update = [
+            (self.title_label, {'bg': self.colors['bg'], 'fg': self.colors['fg']}),
+            (self.subtitle_label, {'bg': self.colors['bg'], 'fg': self.colors['fg_secondary']}),
+            (self.drop_frame, {'bg': self.colors['drop_zone']}),
+            (self.drop_label, {'bg': self.colors['drop_zone'], 'fg': self.colors['fg']}),
+            (self.file_info_label, {'bg': self.colors['bg'], 'fg': self.colors['fg_secondary']}),
+            (self.status_label, {'bg': self.colors['bg'], 'fg': self.colors['success']}),
+            (self.footer_label, {'bg': self.colors['bg'], 'fg': self.colors['fg_secondary']})
+        ]
+
+        for widget, config in widgets_to_update:
+            if widget and widget.winfo_exists():
+                try:
+                    widget.configure(**config)
+                except:
+                    pass
+
+        # Update frames
+        if hasattr(self, 'output_frame'):
+            self.output_frame.configure(bg=self.colors['bg'])
+            self.output_dir_frame.configure(bg=self.colors['bg'])
+
+        # Update buttons
+        if hasattr(self, 'process_btn'):
+            if self.process_btn['state'] == 'normal':
+                self.process_btn.configure(bg=self.colors['success'])
+            else:
+                self.process_btn.configure(bg=self.colors['button'])
+
     def setup_ui(self):
+        # Dark mode toggle
+        toggle_frame = tk.Frame(self.root, bg=self.colors['bg'])
+        toggle_frame.pack(anchor="ne", padx=20, pady=10)
+
+        dark_mode_checkbox = ttk.Checkbutton(toggle_frame, text="Dark Mode",
+                                           variable=self.dark_mode)
+        dark_mode_checkbox.pack()
+
         # Main title
-        title = tk.Label(self.root, text="Realisierungsdatenvisualizer", 
-                        font=("Helvetica", 20, "bold"), 
-                        bg="#f0f0f0", fg="#2c3e50")
-        title.pack(pady=20)
-        
-        subtitle = tk.Label(self.root, text="Changing Waves Fundraiser Data Processor", 
-                           font=("Helvetica", 12), 
-                           bg="#f0f0f0", fg="#7f8c8d")
-        subtitle.pack(pady=(0, 30))
+        self.title_label = tk.Label(self.root, text="Realisierungsdatenvisualizer",
+                        font=("Helvetica", 20, "bold"),
+                        bg=self.colors['bg'], fg=self.colors['fg'])
+        self.title_label.pack(pady=20)
+
+        self.subtitle_label = tk.Label(self.root, text="Changing Waves Fundraiser Data Processor",
+                           font=("Helvetica", 12),
+                           bg=self.colors['bg'], fg=self.colors['fg_secondary'])
+        self.subtitle_label.pack(pady=(0, 30))
         
         # Drag and drop area
-        self.drop_frame = tk.Frame(self.root, bg="#ecf0f1", relief="solid", bd=2)
+        self.drop_frame = tk.Frame(self.root, bg=self.colors['drop_zone'], relief="solid", bd=2)
         self.drop_frame.pack(pady=20, padx=40, fill="both", expand=True)
-        
+
         # Adjust text based on drag and drop availability
         if DND_AVAILABLE:
             drop_text = "Drag & Drop CSV File Here\n\nor\n\nClick to Browse Files"
         else:
             drop_text = "Click to Browse CSV Files\n\n(Drag & Drop not available)"
-            
-        self.drop_label = tk.Label(self.drop_frame, 
-                                  text=drop_text, 
-                                  font=("Helvetica", 16), 
-                                  bg="#ecf0f1", fg="#34495e",
+
+        self.drop_label = tk.Label(self.drop_frame,
+                                  text=drop_text,
+                                  font=("Helvetica", 16),
+                                  bg=self.colors['drop_zone'], fg=self.colors['fg'],
                                   cursor="hand2")
         self.drop_label.pack(expand=True)
         
@@ -131,41 +223,41 @@ class CSVFormatterApp:
         # File info label
         self.file_info_label = tk.Label(self.root, text="No file selected",
                                        font=("Helvetica", 10),
-                                       bg="#f0f0f0", fg="#7f8c8d")
+                                       bg=self.colors['bg'], fg=self.colors['fg_secondary'])
         self.file_info_label.pack(pady=(10, 10))
 
         # Output directory selection
-        output_frame = tk.Frame(self.root, bg="#f0f0f0")
-        output_frame.pack(pady=(0, 20), padx=40, fill="x")
+        self.output_frame = tk.Frame(self.root, bg=self.colors['bg'])
+        self.output_frame.pack(pady=(0, 20), padx=40, fill="x")
 
-        output_label = tk.Label(output_frame, text="Output Directory:",
+        output_label = tk.Label(self.output_frame, text="Output Directory:",
                                font=("Helvetica", 11, "bold"),
-                               bg="#f0f0f0", fg="#2c3e50")
+                               bg=self.colors['bg'], fg=self.colors['fg'])
         output_label.pack(anchor="w")
 
-        output_dir_frame = tk.Frame(output_frame, bg="#f0f0f0")
-        output_dir_frame.pack(fill="x", pady=(5, 0))
+        self.output_dir_frame = tk.Frame(self.output_frame, bg=self.colors['bg'])
+        self.output_dir_frame.pack(fill="x", pady=(5, 0))
 
         self.output_dir_var = tk.StringVar()
         self.output_dir_var.set("pdf_output (default)")
 
-        self.output_entry = tk.Entry(output_dir_frame, textvariable=self.output_dir_var,
+        self.output_entry = tk.Entry(self.output_dir_frame, textvariable=self.output_dir_var,
                                     font=("Helvetica", 10), width=40,
-                                    bg="white", fg="#2c3e50")
+                                    bg=self.colors['entry'], fg=self.colors['fg'])
         self.output_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
 
-        self.browse_output_btn = tk.Button(output_dir_frame, text="Browse",
+        self.browse_output_btn = tk.Button(self.output_dir_frame, text="Browse",
                                           font=("Helvetica", 10),
-                                          bg="#95a5a6", fg="white",
+                                          bg=self.colors['button'], fg="white",
                                           padx=15, pady=5,
                                           command=self.browse_output_dir,
                                           cursor="hand2")
         self.browse_output_btn.pack(side="right")
 
         # Clear button for output directory
-        self.clear_output_btn = tk.Button(output_dir_frame, text="Default",
+        self.clear_output_btn = tk.Button(self.output_dir_frame, text="Default",
                                          font=("Helvetica", 10),
-                                         bg="#e67e22", fg="white",
+                                         bg=self.colors['warning'], fg="white",
                                          padx=15, pady=5,
                                          command=self.reset_output_dir,
                                          cursor="hand2")
@@ -177,26 +269,26 @@ class CSVFormatterApp:
                                            length=400)
         
         # Status label
-        self.status_label = tk.Label(self.root, text="Ready to process files", 
-                                    font=("Helvetica", 10), 
-                                    bg="#f0f0f0", fg="#27ae60")
+        self.status_label = tk.Label(self.root, text="Ready to process files",
+                                    font=("Helvetica", 10),
+                                    bg=self.colors['bg'], fg=self.colors['success'])
         self.status_label.pack(pady=(0, 10))
-        
+
         # Process button
-        self.process_btn = tk.Button(self.root, text="Process CSV", 
+        self.process_btn = tk.Button(self.root, text="Process CSV",
                                     font=("Helvetica", 14, "bold"),
-                                    bg="#3498db", fg="white", 
+                                    bg=self.colors['button'], fg="white",
                                     padx=30, pady=10,
                                     command=self.process_file,
                                     cursor="hand2",
                                     state="disabled")
         self.process_btn.pack(pady=20)
-        
+
         # Footer
-        footer = tk.Label(self.root, text="© 2025 Changing Waves", 
-                         font=("Helvetica", 9), 
-                         bg="#f0f0f0", fg="#95a5a6")
-        footer.pack(side="bottom", pady=10)
+        self.footer_label = tk.Label(self.root, text="© 2025 Changing Waves",
+                         font=("Helvetica", 9),
+                         bg=self.colors['bg'], fg=self.colors['fg_secondary'])
+        self.footer_label.pack(side="bottom", pady=10)
     
     def on_drop(self, event):
         files = self.root.tk.splitlist(event.data)
@@ -218,11 +310,11 @@ class CSVFormatterApp:
     def set_input_file(self, file_path):
         self.input_file = file_path
         filename = os.path.basename(file_path)
-        self.file_info_label.config(text=f"Selected: {filename}", fg="#27ae60")
+        self.file_info_label.config(text=f"Selected: {filename}", fg=self.colors['success'])
         self.drop_label.config(text=f"✓ {filename}\n\nClick to select a different file",
-                              fg="#27ae60")
-        self.process_btn.config(state="normal", bg="#27ae60")
-        self.status_label.config(text="File ready for processing", fg="#27ae60")
+                              fg=self.colors['success'])
+        self.process_btn.config(state="normal", bg=self.colors['success'])
+        self.status_label.config(text="File ready for processing", fg=self.colors['success'])
 
     def browse_output_dir(self):
         directory = filedialog.askdirectory(
@@ -307,12 +399,61 @@ class CSVFormatterApp:
     
     def processing_error(self, error_msg):
         self.hide_processing()
-        self.status_label.config(text="❌ Processing failed", fg="#e74c3c")
+        self.status_label.config(text="❌ Processing failed", fg=self.colors['error'])
         messagebox.showerror("Error", f"An error occurred while processing:\n\n{error_msg}")
+
+    def update_team_assignments_ui(self, week, fundraiser, tl_checkboxes, team_assignments, all_fundraisers, assignment_frame):
+        """Update the team assignment UI when TL selection changes."""
+        # Clear existing assignment UI
+        for widget in team_assignments[week]["frame"].winfo_children():
+            widget.destroy()
+
+        # Get current TLs for this week
+        current_tls = []
+        for person, checkbox_var in tl_checkboxes[week].items():
+            if checkbox_var.get():
+                current_tls.append(person)
+
+        # Initialize assignments for new TLs
+        if "assignments" not in team_assignments[week]:
+            team_assignments[week]["assignments"] = {}
+
+        for tl in current_tls:
+            if tl not in team_assignments[week]["assignments"]:
+                team_assignments[week]["assignments"][tl] = {}
+
+        # Remove assignments for non-TLs
+        tls_to_remove = []
+        for tl in team_assignments[week]["assignments"].keys():
+            if tl not in current_tls:
+                tls_to_remove.append(tl)
+        for tl in tls_to_remove:
+            del team_assignments[week]["assignments"][tl]
+
+        # Create UI for each TL's team selection
+        for tl in current_tls:
+            # TL section
+            tl_frame = tk.LabelFrame(team_assignments[week]["frame"],
+                                   text=f"Team for {tl}",
+                                   font=("Helvetica", 10, "bold"),
+                                   bg=self.colors['bg_secondary'],
+                                   fg=self.colors['fg'])
+            tl_frame.pack(fill="x", padx=5, pady=5)
+
+            # Team member checkboxes
+            for person in sorted(all_fundraisers[week]):
+                if person != tl:  # Don't include TL in their own team selection
+                    if person not in team_assignments[week]["assignments"][tl]:
+                        team_assignments[week]["assignments"][tl][person] = tk.BooleanVar()
+
+                    member_checkbox = ttk.Checkbutton(tl_frame,
+                                                    text=person,
+                                                    variable=team_assignments[week]["assignments"][tl][person])
+                    member_checkbox.pack(anchor="w", padx=10, pady=2)
 
     def show_weekly_tl_selection_dialog(self, fundraisers_by_week):
         """
-        Show dialog to select team leaders per calendar week and input working days.
+        Show dialog to select team leaders per calendar week and assign team members.
 
         Args:
             fundraisers_by_week: Dict of {week: [fundraiser_names]}
@@ -321,9 +462,9 @@ class CSVFormatterApp:
             True if user confirmed selections, False if cancelled
         """
         dialog = tk.Toplevel(self.root)
-        dialog.title("Weekly Team Leader Selection & Working Days")
-        dialog.geometry("800x600")
-        dialog.configure(bg="#f0f0f0")
+        dialog.title("Weekly Team Leader Selection & Team Assignment")
+        dialog.geometry("1000x700")
+        dialog.configure(bg=self.colors['bg'])
         dialog.transient(self.root)
         dialog.grab_set()
 
@@ -334,15 +475,15 @@ class CSVFormatterApp:
         dialog.geometry(f"+{x}+{y}")
 
         # Title
-        title = tk.Label(dialog, text="Weekly Team Leader Selection & Working Days",
+        title = tk.Label(dialog, text="Weekly Team Leader Selection & Team Assignment",
                         font=("Helvetica", 16, "bold"),
-                        bg="#f0f0f0", fg="#2c3e50")
+                        bg=self.colors['bg'], fg=self.colors['fg'])
         title.pack(pady=20)
 
         instructions = tk.Label(dialog,
-                               text="For each calendar week:\n1. Check TL boxes for Team Leaders\n2. Enter working days for each fundraiser",
+                               text="For each calendar week:\n1. Check TL boxes for Team Leaders\n2. Select team members for each TL\n3. Enter working days for each person",
                                font=("Helvetica", 11),
-                               bg="#f0f0f0", fg="#7f8c8d",
+                               bg=self.colors['bg'], fg=self.colors['fg_secondary'],
                                justify="center")
         instructions.pack(pady=(0, 20))
 
@@ -351,8 +492,9 @@ class CSVFormatterApp:
         notebook.pack(fill="both", expand=True, padx=20, pady=(0, 20))
 
         # Store all variables
-        weekly_checkboxes = {}
+        weekly_tl_checkboxes = {}
         weekly_working_days = {}
+        weekly_team_assignments = {}  # {week: {tl_name: [team_member_names]}}
 
         # Create tab for each week
         for week in sorted(fundraisers_by_week.keys()):
@@ -360,67 +502,95 @@ class CSVFormatterApp:
             week_frame = ttk.Frame(notebook)
             notebook.add(week_frame, text=f"{week}")
 
-            # Scrollable frame for this week's fundraisers
-            canvas = tk.Canvas(week_frame, bg="#f9f9f9")
-            scrollbar = ttk.Scrollbar(week_frame, orient="vertical", command=canvas.yview)
-            scrollable_frame = ttk.Frame(canvas)
+            # Main container
+            main_container = tk.Frame(week_frame, bg=self.colors['bg_secondary'])
+            main_container.pack(fill="both", expand=True, padx=10, pady=10)
 
-            scrollable_frame.bind(
+            # Left side - Team Leader selection
+            left_frame = tk.Frame(main_container, bg=self.colors['bg_secondary'])
+            left_frame.pack(side="left", fill="both", expand=True, padx=(0, 10))
+
+            # TL selection title
+            tl_title = tk.Label(left_frame, text=f"Team Leaders for {week}",
+                               font=("Helvetica", 12, "bold"),
+                               bg=self.colors['bg_secondary'], fg=self.colors['fg'])
+            tl_title.pack(pady=(0, 10))
+
+            # Scrollable TL frame
+            tl_canvas = tk.Canvas(left_frame, bg=self.colors['bg_secondary'], height=200)
+            tl_scrollbar = ttk.Scrollbar(left_frame, orient="vertical", command=tl_canvas.yview)
+            tl_scrollable_frame = tk.Frame(tl_canvas, bg=self.colors['bg_secondary'])
+
+            tl_scrollable_frame.bind(
                 "<Configure>",
-                lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+                lambda e: tl_canvas.configure(scrollregion=tl_canvas.bbox("all"))
             )
 
-            canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-            canvas.configure(yscrollcommand=scrollbar.set)
+            tl_canvas.create_window((0, 0), window=tl_scrollable_frame, anchor="nw")
+            tl_canvas.configure(yscrollcommand=tl_scrollbar.set)
 
-            canvas.pack(side="left", fill="both", expand=True)
-            scrollbar.pack(side="right", fill="y")
-
-            # Week header
-            week_title = tk.Label(scrollable_frame, text=f"Calendar Week: {week}",
-                                font=("Helvetica", 14, "bold"),
-                                bg="#f9f9f9", fg="#2c3e50")
-            week_title.pack(pady=10)
-
-            # Headers
-            header_frame = tk.Frame(scrollable_frame, bg="#f9f9f9")
-            header_frame.pack(fill="x", padx=20, pady=5)
-
-            tk.Label(header_frame, text="TL", font=("Helvetica", 10, "bold"),
-                    bg="#f9f9f9", width=5).pack(side="left", padx=(0, 10))
-            tk.Label(header_frame, text="Fundraiser Name", font=("Helvetica", 10, "bold"),
-                    bg="#f9f9f9", width=30, anchor="w").pack(side="left", padx=(0, 10))
-            tk.Label(header_frame, text="Working Days", font=("Helvetica", 10, "bold"),
-                    bg="#f9f9f9").pack(side="left")
+            tl_canvas.pack(side="left", fill="both", expand=True)
+            tl_scrollbar.pack(side="right", fill="y")
 
             # Initialize week data
-            weekly_checkboxes[week] = {}
+            weekly_tl_checkboxes[week] = {}
             weekly_working_days[week] = {}
+            weekly_team_assignments[week] = {}
 
-            # Create rows for each fundraiser in this week
+            # Team leader selection rows
             for fundraiser in sorted(fundraisers_by_week[week]):
-                row_frame = tk.Frame(scrollable_frame, bg="white", relief="solid", bd=1)
-                row_frame.pack(fill="x", padx=20, pady=2)
+                tl_row_frame = tk.Frame(tl_scrollable_frame, bg=self.colors['entry'], relief="solid", bd=1)
+                tl_row_frame.pack(fill="x", padx=5, pady=2)
 
-                # Team Leader checkbox
-                weekly_checkboxes[week][fundraiser] = tk.BooleanVar()
-                checkbox = ttk.Checkbutton(row_frame,
-                                         variable=weekly_checkboxes[week][fundraiser])
-                checkbox.pack(side="left", padx=(5, 15))
+                # TL checkbox
+                weekly_tl_checkboxes[week][fundraiser] = tk.BooleanVar()
+                tl_checkbox = ttk.Checkbutton(tl_row_frame, text="TL",
+                                            variable=weekly_tl_checkboxes[week][fundraiser],
+                                            command=lambda f=fundraiser, w=week: dialog.on_tl_selection_changed(w, f, weekly_tl_checkboxes, weekly_team_assignments, fundraisers_by_week, team_assignment_frame))
+                tl_checkbox.pack(side="left", padx=5)
 
                 # Fundraiser name
-                name_label = tk.Label(row_frame, text=fundraiser,
+                name_label = tk.Label(tl_row_frame, text=fundraiser,
                                      font=("Helvetica", 10),
-                                     bg="white", width=30, anchor="w")
+                                     bg=self.colors['entry'], fg=self.colors['fg'],
+                                     width=25, anchor="w")
                 name_label.pack(side="left", padx=(0, 10))
 
                 # Working days entry
                 weekly_working_days[week][fundraiser] = tk.StringVar()
                 weekly_working_days[week][fundraiser].set("5")  # Default to 5 days
-                days_entry = tk.Entry(row_frame,
+                days_entry = tk.Entry(tl_row_frame,
                                     textvariable=weekly_working_days[week][fundraiser],
-                                    font=("Helvetica", 10), width=10)
-                days_entry.pack(side="left", padx=5)
+                                    font=("Helvetica", 9), width=8,
+                                    bg=self.colors['bg'], fg=self.colors['fg'])
+                days_entry.pack(side="right", padx=5)
+
+                tk.Label(tl_row_frame, text="Days:", font=("Helvetica", 9),
+                        bg=self.colors['entry'], fg=self.colors['fg']).pack(side="right", padx=(0, 5))
+
+            # Right side - Team assignments
+            right_frame = tk.Frame(main_container, bg=self.colors['bg_secondary'])
+            right_frame.pack(side="right", fill="both", expand=True)
+
+            # Team assignment title
+            team_title = tk.Label(right_frame, text="Team Assignments",
+                                 font=("Helvetica", 12, "bold"),
+                                 bg=self.colors['bg_secondary'], fg=self.colors['fg'])
+            team_title.pack(pady=(0, 10))
+
+            # Team assignment frame (will be populated dynamically)
+            team_assignment_frame = tk.Frame(right_frame, bg=self.colors['bg_secondary'])
+            team_assignment_frame.pack(fill="both", expand=True)
+
+            # Store reference to the team assignment frame for updates
+            weekly_team_assignments[week] = {"frame": team_assignment_frame, "assignments": {}}
+
+        # Add helper method for TL selection changes
+        def on_tl_selection_changed(week, fundraiser, tl_checkboxes, team_assignments, all_fundraisers, assignment_frame):
+            self.update_team_assignments_ui(week, fundraiser, tl_checkboxes, team_assignments, all_fundraisers, assignment_frame)
+
+        # Store the helper function in dialog for access
+        dialog.on_tl_selection_changed = on_tl_selection_changed
 
         # Result storage
         result = {"confirmed": False}
@@ -442,18 +612,28 @@ class CSVFormatterApp:
 
             # Store all selections
             self.weekly_team_leaders = {}
+            self.weekly_team_assignments = {}
             self.fundraiser_working_days = {}
 
             for week in fundraisers_by_week.keys():
                 self.weekly_team_leaders[week] = {}
+                self.weekly_team_assignments[week] = {}
                 self.fundraiser_working_days[week] = {}
 
                 for fundraiser in fundraisers_by_week[week]:
-                    is_tl = weekly_checkboxes[week][fundraiser].get()
+                    is_tl = weekly_tl_checkboxes[week][fundraiser].get()
                     working_days = float(weekly_working_days[week][fundraiser].get())
 
                     if is_tl:
                         self.weekly_team_leaders[week][fundraiser] = working_days
+                        # Get team assignments for this TL
+                        if fundraiser in weekly_team_assignments[week]["assignments"]:
+                            team_members = []
+                            for member, var in weekly_team_assignments[week]["assignments"][fundraiser].items():
+                                if var.get():
+                                    team_members.append(member)
+                            self.weekly_team_assignments[week][fundraiser] = team_members
+                            print(f"DEBUG: TL {fundraiser} in {week} assigned team: {team_members}")
 
                     self.fundraiser_working_days[week][fundraiser] = working_days
 
@@ -540,8 +720,19 @@ class CSVFormatterApp:
         Returns:
             Dictionary with bonus details
         """
-        if not team_data or len(team_data) < 3:  # Minimum 3 team members required
-            return {"bonus": 0, "team_average": 0, "rate": "N/A", "team_size": len(team_data)}
+        # Initialize default return structure
+        default_return = {
+            "bonus": 0,
+            "team_average": 0,
+            "rate": 0,
+            "bracket": "no bonus",
+            "team_size": len(team_data) if team_data else 0,
+            "team_points": 0
+        }
+
+        if not team_data or len(team_data) < 2:  # Minimum 2 team members required (TL + 1 member)
+            default_return["bracket"] = "team too small"
+            return default_return
 
         # Calculate team total points (including TL)
         team_points = 0
@@ -552,23 +743,40 @@ class CSVFormatterApp:
             team_working_days += data["working_days"]
 
         if team_working_days <= 0:
-            return {"bonus": 0, "team_average": 0, "rate": "N/A", "team_size": len(team_data)}
+            default_return["bracket"] = "no working days"
+            return default_return
 
         team_average = team_points / team_working_days
 
-        # Bonus rates based on team average
-        if team_average < 2:
-            rate = 0.50
-            bracket = "under 2er"
-        elif team_average < 3:
-            rate = 1.00
-            bracket = "2er"
-        elif team_average < 5:
-            rate = 2.50
-            bracket = "3er"
+        # Bonus rates based on team average - adjusted for smaller teams
+        if len(team_data) < 3:
+            # Reduced rates for small teams (TL + 1 member)
+            if team_average < 2:
+                rate = 0.25
+                bracket = "small team under 2er"
+            elif team_average < 3:
+                rate = 0.50
+                bracket = "small team 2er"
+            elif team_average < 5:
+                rate = 1.25
+                bracket = "small team 3er"
+            else:
+                rate = 2.25
+                bracket = "small team 5er+"
         else:
-            rate = 4.50
-            bracket = "5er+"
+            # Full rates for larger teams (3+ members)
+            if team_average < 2:
+                rate = 0.50
+                bracket = "under 2er"
+            elif team_average < 3:
+                rate = 1.00
+                bracket = "2er"
+            elif team_average < 5:
+                rate = 2.50
+                bracket = "3er"
+            else:
+                rate = 4.50
+                bracket = "5er+"
 
         bonus = team_points * rate
 
@@ -740,7 +948,17 @@ class CSVFormatterApp:
             raise Exception("Team Leader selection was cancelled")
 
         print(f"Weekly Team Leaders: {self.weekly_team_leaders}")
+        print(f"Weekly Team Assignments: {self.weekly_team_assignments}")
         print(f"Weekly working days: {self.fundraiser_working_days}")
+
+        # Debug: Check if team leaders appear in multiple weeks
+        all_tls = set()
+        for week, tls in self.weekly_team_leaders.items():
+            all_tls.update(tls.keys())
+        print(f"All team leaders across all weeks: {all_tls}")
+        for tl in all_tls:
+            weeks_for_tl = [week for week, tls in self.weekly_team_leaders.items() if tl in tls]
+            print(f"TL {tl} is assigned to weeks: {weeks_for_tl}")
 
         # Debug: print unique calendar weeks in the data
         print(f"Calendar weeks in data: {sorted(df['Calendar week'].dropna().unique())}")
@@ -839,17 +1057,35 @@ class CSVFormatterApp:
 
             # Calculate team leader bonuses for this week
             if week in self.weekly_team_leaders and self.weekly_team_leaders[week]:
+                print(f"Processing TL bonuses for {week}: TLs = {list(self.weekly_team_leaders[week].keys())}")
                 weekly_team_leader_bonuses[week] = {}
 
                 for tl_name, tl_working_days in self.weekly_team_leaders[week].items():
                     if tl_name in team_data_for_week:
-                        # Calculate team bonus (all fundraisers in this week are considered team members)
-                        team_bonus_info = self.calculate_team_leader_bonus(team_data_for_week, tl_working_days)
-                        milestone_info = self.calculate_team_leader_milestones(len(team_data_for_week))
+                        # Get specific team members for this TL
+                        tl_team_data = {tl_name: team_data_for_week[tl_name]}  # Include TL in their team
+
+                        # Add selected team members for this TL
+                        if week in self.weekly_team_assignments and tl_name in self.weekly_team_assignments[week]:
+                            for team_member in self.weekly_team_assignments[week][tl_name]:
+                                if team_member in team_data_for_week:
+                                    tl_team_data[team_member] = team_data_for_week[team_member]
+                        else:
+                            # If no specific team assignments, include all other fundraisers as team members (backward compatibility)
+                            print(f"No specific team assignments for TL {tl_name} in {week}, using all fundraisers")
+                            for fundraiser_name, fundraiser_data in team_data_for_week.items():
+                                if fundraiser_name != tl_name:  # Don't duplicate the TL
+                                    tl_team_data[fundraiser_name] = fundraiser_data
+
+                        # Calculate team bonus only for selected team members
+                        team_bonus_info = self.calculate_team_leader_bonus(tl_team_data, tl_working_days)
+                        milestone_info = self.calculate_team_leader_milestones(len(tl_team_data))
 
                         # Debug: check team bonus structure
                         if not team_bonus_info or 'bracket' not in team_bonus_info:
                             print(f"Warning: Invalid team_bonus_info for {tl_name} in {week}: {team_bonus_info}")
+
+                        print(f"TL {tl_name} team in {week}: {list(tl_team_data.keys())} (size: {len(tl_team_data)})")
 
                         weekly_team_leader_bonuses[week][tl_name] = {
                             "team_bonus": team_bonus_info,
@@ -932,6 +1168,9 @@ class CSVFormatterApp:
 
         # Add weekly team leader bonus summary at the end
         if weekly_team_leader_bonuses:
+            print(f"Final weekly_team_leader_bonuses keys: {list(weekly_team_leader_bonuses.keys())}")
+            for week, bonuses in weekly_team_leader_bonuses.items():
+                print(f"Week {week} has TL bonuses for: {list(bonuses.keys())}")
             final_rows.append({col: '' for col in required_columns})  # Empty separator row
 
             final_rows.append({

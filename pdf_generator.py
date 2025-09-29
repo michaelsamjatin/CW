@@ -276,6 +276,11 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir, payment_info=None, 
 
     # Add team leader bonus page if available
     if tl_bonus_info is not None and not tl_bonus_info.empty:
+        print(f"PDF DEBUG: Processing TL bonus info for {fundraiser_name}")
+        print(f"PDF DEBUG: TL bonus data shape: {tl_bonus_info.shape}")
+        for idx, row in tl_bonus_info.iterrows():
+            print(f"PDF DEBUG: Row {idx}: Fundraiser Name='{row['Fundraiser Name']}', Calendar week='{row['Calendar week']}'")
+
         content.append(PageBreak())
 
         # Header
@@ -319,6 +324,7 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir, payment_info=None, 
             # Check if this is a week header
             if pd.notna(bonus_row['Fundraiser Name']) and str(bonus_row['Fundraiser Name']).startswith('---'):
                 current_week = str(bonus_row['Fundraiser Name']).replace('---', '').strip()
+                print(f"PDF DEBUG: Found week header: '{current_week}' from '{bonus_row['Fundraiser Name']}'")
                 continue
 
             # Team bonus data
@@ -659,6 +665,7 @@ def generate_all_pdf_files(csv_file_path, output_dir=None):
             fundraiser_tl_info = pd.DataFrame()
 
             # Find rows related to this fundraiser in the complete CSV
+            current_week_header = None
             for idx, row in all_csv_data.iterrows():
                 # Check if this is payment info following our fundraiser
                 if (pd.notna(row['Public RefID']) and
@@ -676,16 +683,30 @@ def generate_all_pdf_files(csv_file_path, output_dir=None):
                             fundraiser_payment_info = pd.concat([fundraiser_payment_info, row.to_frame().T])
                             break
 
+                # Track week headers as we encounter them
+                elif (pd.notna(row['Fundraiser Name']) and str(row['Fundraiser Name']).startswith('---')):
+                    current_week_header = row
+
                 # Check for TL bonus info
                 elif ((pd.notna(row['Calendar week']) and str(row['Calendar week']) in ['Team Bonus', 'Milestones']) and
                       (pd.notna(row['Fundraiser Name']) and str(row['Fundraiser Name']) == fundraiser_name)):
-                    fundraiser_tl_info = pd.concat([fundraiser_tl_info, row.to_frame().T])
+                    # Include the relevant week header first (if we have one)
+                    if current_week_header is not None:
+                        # Check if we already have this week header in the TL info
+                        week_name = str(current_week_header['Fundraiser Name'])
+                        already_has_week = False
+                        for _, existing_row in fundraiser_tl_info.iterrows():
+                            if (pd.notna(existing_row['Fundraiser Name']) and
+                                str(existing_row['Fundraiser Name']) == week_name):
+                                already_has_week = True
+                                break
 
-                # Check for week headers in TL bonus section
-                elif (pd.notna(row['Fundraiser Name']) and str(row['Fundraiser Name']).startswith('---')):
-                    # Include week headers for context
-                    if not fundraiser_tl_info.empty:  # Only if we already have TL info for this fundraiser
-                        fundraiser_tl_info = pd.concat([fundraiser_tl_info, row.to_frame().T])
+                        # Only add the week header if we don't already have it
+                        if not already_has_week:
+                            fundraiser_tl_info = pd.concat([fundraiser_tl_info, current_week_header.to_frame().T])
+
+                    # Add the TL bonus data
+                    fundraiser_tl_info = pd.concat([fundraiser_tl_info, row.to_frame().T])
 
             pdf_path = generate_pdf_for_fundraiser(fundraiser_data, output_dir,
                                                  fundraiser_payment_info, fundraiser_tl_info)
