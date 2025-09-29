@@ -66,14 +66,26 @@ def generate_html_for_fundraiser(fundraiser_data, template_path, output_dir):
     template_content = template_content.replace('placeholder="November"', f'value="{month}"')
     template_content = template_content.replace('placeholder="2025"', f'value="{year}"')
 
-    # Group data by calendar week
+    # Group data by calendar week, separating regular data from payment info
     weeks_data = {}
+    payment_info = []
+    tl_bonus_info = []
+
     for _, row in fundraiser_data.iterrows():
         if pd.notna(row['Calendar week']) and pd.notna(row['Public RefID']):
             week = row['Calendar week']
             if week not in weeks_data:
                 weeks_data[week] = []
             weeks_data[week].append(row)
+        elif pd.notna(row['Public RefID']) and str(row['Public RefID']).startswith('Payout'):
+            # This is payment information
+            payment_info.append(row)
+        elif pd.notna(row['Calendar week']) and str(row['Calendar week']) in ['Team Bonus', 'Milestones']:
+            # This is TL bonus information
+            tl_bonus_info.append(row)
+        elif pd.notna(row['Fundraiser Name']) and str(row['Fundraiser Name']).startswith('---') and str(row['Fundraiser Name']).endswith('---'):
+            # This is a week header for TL bonuses
+            tl_bonus_info.append(row)
 
     # Generate weeks HTML
     weeks_html = ""
@@ -165,6 +177,110 @@ def generate_html_for_fundraiser(fundraiser_data, template_path, output_dir):
 
         weeks_html += week_html
         week_index += 1
+
+    # Add payment information section if available
+    if payment_info:
+        payment_html = '''
+            <div class="payment-section" style="margin-top: 30px; padding: 20px; border: 2px solid #3498db; border-radius: 8px; background-color: #f8f9fa;">
+                <h3 style="color: #2c3e50; margin-bottom: 15px;">💰 Payment Information</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">'''
+
+        for payment in payment_info:
+            payout_type = str(payment['Public RefID']).replace('Payout (', '').replace(' avg)', '')
+            working_days = str(payment['Interval']).replace(' days', '')
+            payout_amount = str(payment['Amount Yearly'])
+            rate = str(payment['status_agency'])
+            daily_avg = str(payment['points']).replace('Avg: ', '')
+
+            payment_html += f'''
+                    <div style="background-color: white; padding: 15px; border-radius: 5px; border-left: 4px solid #27ae60;">
+                        <div style="font-weight: bold; color: #2c3e50; margin-bottom: 10px;">Regular Fundraiser Payout</div>
+                        <div style="font-size: 14px;">
+                            <div><strong>Performance Level:</strong> {payout_type}</div>
+                            <div><strong>Working Days:</strong> {working_days}</div>
+                            <div><strong>Daily Average:</strong> {daily_avg} points/day</div>
+                            <div><strong>{rate}</strong></div>
+                            <div style="font-size: 16px; font-weight: bold; color: #27ae60; margin-top: 8px;">
+                                <strong>Total Payout: {payout_amount}</strong>
+                            </div>
+                        </div>
+                    </div>'''
+
+        payment_html += '''
+                </div>
+            </div>'''
+
+        weeks_html += payment_html
+
+    # Add team leader bonus section if available
+    if tl_bonus_info:
+        tl_html = '''
+            <div class="tl-bonus-section" style="margin-top: 30px; padding: 20px; border: 2px solid #e74c3c; border-radius: 8px; background-color: #fdf2f2;">
+                <h3 style="color: #c0392b; margin-bottom: 15px;">👑 Team Leader Bonuses by Week</h3>'''
+
+        current_week = None
+        for bonus in tl_bonus_info:
+            # Check if this is a week header
+            if pd.notna(bonus['Fundraiser Name']) and str(bonus['Fundraiser Name']).startswith('---'):
+                week_name = str(bonus['Fundraiser Name']).replace('---', '').strip()
+                current_week = week_name
+                tl_html += f'''
+                    <div style="background-color: #34495e; color: white; padding: 10px; border-radius: 5px; margin: 20px 0 10px 0; text-align: center;">
+                        <strong>Calendar Week: {week_name}</strong>
+                    </div>'''
+                continue
+
+            # Team bonus
+            if str(bonus['Calendar week']) == 'Team Bonus':
+                tl_name = str(bonus['Fundraiser Name'])
+                team_avg = str(bonus['Public RefID']).replace('Team avg: ', '')
+                team_size = str(bonus['Age'])
+                rate = str(bonus['Interval'])
+                bonus_amount = str(bonus['Amount Yearly'])
+                bracket = str(bonus['status_agency'])
+                team_points = str(bonus['points']).replace(' pts', '')
+
+                tl_html += f'''
+                    <div style="background-color: white; padding: 15px; border-radius: 5px; border-left: 4px solid #e74c3c; margin-bottom: 15px;">
+                        <div style="font-weight: bold; color: #c0392b; margin-bottom: 10px;">Team Leader: {tl_name} - Performance Bonus</div>
+                        <div style="font-size: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div><strong>Team Average:</strong> {team_avg} points/day</div>
+                            <div><strong>Team Size:</strong> {team_size}</div>
+                            <div><strong>Performance Level:</strong> {bracket}</div>
+                            <div><strong>Rate:</strong> {rate}</div>
+                            <div><strong>Team Points:</strong> {team_points} points</div>
+                            <div style="grid-column: 1/-1; font-size: 16px; font-weight: bold; color: #e74c3c; margin-top: 8px;">
+                                <strong>Weekly Team Bonus: {bonus_amount}</strong>
+                            </div>
+                        </div>
+                    </div>'''
+
+            elif str(bonus['Calendar week']) == 'Milestones':
+                max_potential = str(bonus['Public RefID']).replace('Max potential: ', '')
+                team_size_bracket = str(bonus['Age'])
+                coach_bonus = str(bonus['Interval']).replace('Coach: ', '')
+                office_bonus = str(bonus['Amount Yearly']).replace('Office: ', '')
+                external_bonus = str(bonus['status_agency']).replace('External: ', '')
+                material_bonus = str(bonus['points']).replace('Material: ', '')
+
+                tl_html += f'''
+                    <div style="background-color: white; padding: 15px; border-radius: 5px; border-left: 4px solid #f39c12; margin-bottom: 15px;">
+                        <div style="font-weight: bold; color: #e67e22; margin-bottom: 10px;">Milestone Bonuses ({team_size_bracket})</div>
+                        <div style="font-size: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div><strong>Communication (Coach):</strong> {coach_bonus}</div>
+                            <div><strong>Communication (Office):</strong> {office_bonus}</div>
+                            <div><strong>External Presence:</strong> {external_bonus}</div>
+                            <div><strong>Material Responsibility:</strong> {material_bonus}</div>
+                            <div style="grid-column: 1/-1; font-size: 16px; font-weight: bold; color: #f39c12; margin-top: 8px;">
+                                <strong>{max_potential}</strong>
+                            </div>
+                        </div>
+                    </div>'''
+
+        tl_html += '''
+            </div>'''
+
+        weeks_html += tl_html
 
     # Replace the weeks container in template
     # Find the weeks container and replace it

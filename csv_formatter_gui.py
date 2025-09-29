@@ -55,6 +55,8 @@ class CSVFormatterApp:
         
         self.input_file = None
         self.output_dir = None
+        self.weekly_team_leaders = {}  # Store TL selections per week: {week: {fundraiser: working_days}}
+        self.fundraiser_working_days = {}  # Store working days for all fundraisers per week
         self.setup_ui()
     
     def _setup_platform_specific(self):
@@ -282,7 +284,8 @@ class CSVFormatterApp:
             self.root.after(0, lambda: self.processing_complete(result, output_file))
 
         except Exception as e:
-            self.root.after(0, lambda: self.processing_error(str(e)))
+            error_message = str(e)
+            self.root.after(0, lambda: self.processing_error(error_message))
     
     def processing_complete(self, result, output_file):
         self.hide_processing()
@@ -306,7 +309,313 @@ class CSVFormatterApp:
         self.hide_processing()
         self.status_label.config(text="❌ Processing failed", fg="#e74c3c")
         messagebox.showerror("Error", f"An error occurred while processing:\n\n{error_msg}")
-    
+
+    def show_weekly_tl_selection_dialog(self, fundraisers_by_week):
+        """
+        Show dialog to select team leaders per calendar week and input working days.
+
+        Args:
+            fundraisers_by_week: Dict of {week: [fundraiser_names]}
+
+        Returns:
+            True if user confirmed selections, False if cancelled
+        """
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Weekly Team Leader Selection & Working Days")
+        dialog.geometry("800x600")
+        dialog.configure(bg="#f0f0f0")
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        # Center the dialog
+        dialog.update_idletasks()
+        x = (dialog.winfo_screenwidth() - dialog.winfo_width()) // 2
+        y = (dialog.winfo_screenheight() - dialog.winfo_height()) // 2
+        dialog.geometry(f"+{x}+{y}")
+
+        # Title
+        title = tk.Label(dialog, text="Weekly Team Leader Selection & Working Days",
+                        font=("Helvetica", 16, "bold"),
+                        bg="#f0f0f0", fg="#2c3e50")
+        title.pack(pady=20)
+
+        instructions = tk.Label(dialog,
+                               text="For each calendar week:\n1. Check TL boxes for Team Leaders\n2. Enter working days for each fundraiser",
+                               font=("Helvetica", 11),
+                               bg="#f0f0f0", fg="#7f8c8d",
+                               justify="center")
+        instructions.pack(pady=(0, 20))
+
+        # Create notebook for weeks
+        notebook = ttk.Notebook(dialog)
+        notebook.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+
+        # Store all variables
+        weekly_checkboxes = {}
+        weekly_working_days = {}
+
+        # Create tab for each week
+        for week in sorted(fundraisers_by_week.keys()):
+            # Create frame for this week
+            week_frame = ttk.Frame(notebook)
+            notebook.add(week_frame, text=f"{week}")
+
+            # Scrollable frame for this week's fundraisers
+            canvas = tk.Canvas(week_frame, bg="#f9f9f9")
+            scrollbar = ttk.Scrollbar(week_frame, orient="vertical", command=canvas.yview)
+            scrollable_frame = ttk.Frame(canvas)
+
+            scrollable_frame.bind(
+                "<Configure>",
+                lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+            )
+
+            canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+            canvas.configure(yscrollcommand=scrollbar.set)
+
+            canvas.pack(side="left", fill="both", expand=True)
+            scrollbar.pack(side="right", fill="y")
+
+            # Week header
+            week_title = tk.Label(scrollable_frame, text=f"Calendar Week: {week}",
+                                font=("Helvetica", 14, "bold"),
+                                bg="#f9f9f9", fg="#2c3e50")
+            week_title.pack(pady=10)
+
+            # Headers
+            header_frame = tk.Frame(scrollable_frame, bg="#f9f9f9")
+            header_frame.pack(fill="x", padx=20, pady=5)
+
+            tk.Label(header_frame, text="TL", font=("Helvetica", 10, "bold"),
+                    bg="#f9f9f9", width=5).pack(side="left", padx=(0, 10))
+            tk.Label(header_frame, text="Fundraiser Name", font=("Helvetica", 10, "bold"),
+                    bg="#f9f9f9", width=30, anchor="w").pack(side="left", padx=(0, 10))
+            tk.Label(header_frame, text="Working Days", font=("Helvetica", 10, "bold"),
+                    bg="#f9f9f9").pack(side="left")
+
+            # Initialize week data
+            weekly_checkboxes[week] = {}
+            weekly_working_days[week] = {}
+
+            # Create rows for each fundraiser in this week
+            for fundraiser in sorted(fundraisers_by_week[week]):
+                row_frame = tk.Frame(scrollable_frame, bg="white", relief="solid", bd=1)
+                row_frame.pack(fill="x", padx=20, pady=2)
+
+                # Team Leader checkbox
+                weekly_checkboxes[week][fundraiser] = tk.BooleanVar()
+                checkbox = ttk.Checkbutton(row_frame,
+                                         variable=weekly_checkboxes[week][fundraiser])
+                checkbox.pack(side="left", padx=(5, 15))
+
+                # Fundraiser name
+                name_label = tk.Label(row_frame, text=fundraiser,
+                                     font=("Helvetica", 10),
+                                     bg="white", width=30, anchor="w")
+                name_label.pack(side="left", padx=(0, 10))
+
+                # Working days entry
+                weekly_working_days[week][fundraiser] = tk.StringVar()
+                weekly_working_days[week][fundraiser].set("5")  # Default to 5 days
+                days_entry = tk.Entry(row_frame,
+                                    textvariable=weekly_working_days[week][fundraiser],
+                                    font=("Helvetica", 10), width=10)
+                days_entry.pack(side="left", padx=5)
+
+        # Result storage
+        result = {"confirmed": False}
+
+        def on_confirm():
+            # Validate all inputs
+            for week, fundraisers_vars in weekly_working_days.items():
+                for fundraiser, days_var in fundraisers_vars.items():
+                    try:
+                        days = float(days_var.get())
+                        if days <= 0:
+                            messagebox.showerror("Invalid Input",
+                                               f"Working days for {fundraiser} in {week} must be greater than 0")
+                            return
+                    except ValueError:
+                        messagebox.showerror("Invalid Input",
+                                           f"Please enter a valid number for working days for {fundraiser} in {week}")
+                        return
+
+            # Store all selections
+            self.weekly_team_leaders = {}
+            self.fundraiser_working_days = {}
+
+            for week in fundraisers_by_week.keys():
+                self.weekly_team_leaders[week] = {}
+                self.fundraiser_working_days[week] = {}
+
+                for fundraiser in fundraisers_by_week[week]:
+                    is_tl = weekly_checkboxes[week][fundraiser].get()
+                    working_days = float(weekly_working_days[week][fundraiser].get())
+
+                    if is_tl:
+                        self.weekly_team_leaders[week][fundraiser] = working_days
+
+                    self.fundraiser_working_days[week][fundraiser] = working_days
+
+            result["confirmed"] = True
+            dialog.destroy()
+
+        def on_cancel():
+            result["confirmed"] = False
+            dialog.destroy()
+
+        # Buttons
+        button_frame = tk.Frame(dialog, bg="#f0f0f0")
+        button_frame.pack(side="bottom", pady=20)
+
+        cancel_btn = tk.Button(button_frame, text="Cancel",
+                              font=("Helvetica", 12),
+                              bg="#95a5a6", fg="white",
+                              padx=20, pady=8,
+                              command=on_cancel)
+        cancel_btn.pack(side="left", padx=(0, 10))
+
+        confirm_btn = tk.Button(button_frame, text="Confirm",
+                               font=("Helvetica", 12, "bold"),
+                               bg="#27ae60", fg="white",
+                               padx=20, pady=8,
+                               command=on_confirm)
+        confirm_btn.pack(side="right")
+
+        # Wait for dialog to close
+        dialog.wait_window()
+
+        return result["confirmed"]
+
+    def calculate_regular_fundraiser_payout(self, points, working_days):
+        """
+        Calculate payout for regular fundraiser based on points and working days.
+
+        Args:
+            points: Total points earned
+            working_days: Number of days worked
+
+        Returns:
+            Dictionary with payout details
+        """
+        if working_days <= 0:
+            return {"daily_average": 0, "payout": 0, "rate": "N/A"}
+
+        daily_average = points / working_days
+
+        # Payment rates based on daily average
+        if daily_average < 2:
+            rate = 3.95
+            bracket = "under 2er"
+        elif daily_average < 3:
+            rate = 10
+            bracket = "2er"
+        elif daily_average < 5:
+            rate = 15
+            bracket = "3er"
+        elif daily_average < 7:
+            rate = 20
+            bracket = "5er"
+        else:
+            rate = 30
+            bracket = "7er+"
+
+        payout = points * rate
+
+        return {
+            "daily_average": daily_average,
+            "payout": payout,
+            "rate": rate,
+            "bracket": bracket
+        }
+
+    def calculate_team_leader_bonus(self, team_data, tl_working_days):
+        """
+        Calculate team leader bonus based on team performance.
+
+        Args:
+            team_data: Dictionary with fundraiser data for the team
+            tl_working_days: Team leader's working days
+
+        Returns:
+            Dictionary with bonus details
+        """
+        if not team_data or len(team_data) < 3:  # Minimum 3 team members required
+            return {"bonus": 0, "team_average": 0, "rate": "N/A", "team_size": len(team_data)}
+
+        # Calculate team total points (including TL)
+        team_points = 0
+        team_working_days = 0
+
+        for fundraiser, data in team_data.items():
+            team_points += data["points"]
+            team_working_days += data["working_days"]
+
+        if team_working_days <= 0:
+            return {"bonus": 0, "team_average": 0, "rate": "N/A", "team_size": len(team_data)}
+
+        team_average = team_points / team_working_days
+
+        # Bonus rates based on team average
+        if team_average < 2:
+            rate = 0.50
+            bracket = "under 2er"
+        elif team_average < 3:
+            rate = 1.00
+            bracket = "2er"
+        elif team_average < 5:
+            rate = 2.50
+            bracket = "3er"
+        else:
+            rate = 4.50
+            bracket = "5er+"
+
+        bonus = team_points * rate
+
+        return {
+            "bonus": bonus,
+            "team_average": team_average,
+            "rate": rate,
+            "bracket": bracket,
+            "team_size": len(team_data),
+            "team_points": team_points
+        }
+
+    def calculate_team_leader_milestones(self, team_size):
+        """
+        Calculate milestone bonuses for team leaders based on team size.
+
+        Args:
+            team_size: Number of people in the team
+
+        Returns:
+            Dictionary with milestone bonus amounts
+        """
+        if team_size < 4:
+            communication_coach = 5
+            communication_office = 5
+            external_presence = 5
+            material_responsibility = 5
+        elif team_size < 6:
+            communication_coach = 20
+            communication_office = 20
+            external_presence = 20
+            material_responsibility = 20
+        else:
+            communication_coach = 30
+            communication_office = 30
+            external_presence = 30
+            material_responsibility = 30
+
+        return {
+            "communication_coach": communication_coach,
+            "communication_office": communication_office,
+            "external_presence": external_presence,
+            "material_responsibility": material_responsibility,
+            "total_possible": communication_coach + communication_office + external_presence + material_responsibility,
+            "team_size_bracket": f"{team_size} persons"
+        }
+
     # CSV Processing Logic (from original script)
     def calculate_points(self, age, interval, amount_yearly):
         age = int(age)
@@ -393,6 +702,48 @@ class CSVFormatterApp:
 
         if df is None:
             raise Exception("Could not read the CSV file with any supported encoding")
+
+        # Extract fundraisers by calendar week for TL selection
+        df_temp = df.copy()
+        df_temp.columns = df_temp.columns.str.strip()
+        df_temp = df_temp[~df_temp['Fundraiser Name'].str.contains('Subtotal|Total', case=False, na=False)]
+        df_temp['Fundraiser Name'] = df_temp['Fundraiser Name'].ffill()
+        df_temp['Calendar week'] = df_temp['Calendar week'].ffill()
+
+        # Group fundraisers by calendar week
+        fundraisers_by_week = {}
+        for _, row in df_temp.iterrows():
+            if pd.notna(row['Fundraiser Name']) and pd.notna(row['Calendar week']):
+                week = row['Calendar week']
+                fundraiser = row['Fundraiser Name']
+
+                if week not in fundraisers_by_week:
+                    fundraisers_by_week[week] = set()
+                fundraisers_by_week[week].add(fundraiser)
+
+        # Convert sets to lists for dialog
+        for week in fundraisers_by_week:
+            fundraisers_by_week[week] = list(fundraisers_by_week[week])
+
+        # Show weekly TL selection dialog synchronously
+        result = []
+        def show_dialog():
+            result.append(self.show_weekly_tl_selection_dialog(fundraisers_by_week))
+
+        self.root.after_idle(show_dialog)
+
+        # Wait for dialog to complete
+        while not result:
+            self.root.update()
+
+        if not result[0]:
+            raise Exception("Team Leader selection was cancelled")
+
+        print(f"Weekly Team Leaders: {self.weekly_team_leaders}")
+        print(f"Weekly working days: {self.fundraiser_working_days}")
+
+        # Debug: print unique calendar weeks in the data
+        print(f"Calendar weeks in data: {sorted(df['Calendar week'].dropna().unique())}")
         
         # Clean column names
         df.columns = df.columns.str.strip()
@@ -441,14 +792,78 @@ class CSVFormatterApp:
             'points', 'bonus_status'
         ]
         
-        # Create output dataframe with subtotals
+        # Calculate payment data for all fundraisers per week
+        weekly_fundraiser_payments = {}
+        weekly_team_leader_bonuses = {}
+
+        # Process each week separately
+        for week in sorted(df_sorted['Calendar week'].dropna().unique()):
+            if pd.isna(week) or week == '':
+                continue
+
+            week_data = df_sorted[df_sorted['Calendar week'] == week]
+
+            # Skip if no working days data for this week
+            if week not in self.fundraiser_working_days:
+                print(f"Warning: No working days data for week {week}")
+                continue
+
+            weekly_fundraiser_payments[week] = {}
+            team_data_for_week = {}
+
+            # Calculate individual fundraiser payouts for this week
+            for fundraiser_name in week_data['Fundraiser Name'].dropna().unique():
+                if pd.notna(fundraiser_name) and fundraiser_name in self.fundraiser_working_days[week]:
+                    fundraiser_week_data = week_data[week_data['Fundraiser Name'] == fundraiser_name]
+                    non_cancelled_data = fundraiser_week_data[fundraiser_week_data['status_agency'] != 'cancellation']
+                    week_points = non_cancelled_data['points'].sum()
+                    working_days = self.fundraiser_working_days[week][fundraiser_name]
+
+                    # Calculate regular payout
+                    payout_info = self.calculate_regular_fundraiser_payout(week_points, working_days)
+
+                    # Debug: check payout_info structure
+                    if not payout_info or 'bracket' not in payout_info:
+                        print(f"Warning: Invalid payout_info for {fundraiser_name} in {week}: {payout_info}")
+
+                    weekly_fundraiser_payments[week][fundraiser_name] = {
+                        "points": week_points,
+                        "working_days": working_days,
+                        "payout": payout_info
+                    }
+
+                    team_data_for_week[fundraiser_name] = {
+                        "points": week_points,
+                        "working_days": working_days
+                    }
+
+            # Calculate team leader bonuses for this week
+            if week in self.weekly_team_leaders and self.weekly_team_leaders[week]:
+                weekly_team_leader_bonuses[week] = {}
+
+                for tl_name, tl_working_days in self.weekly_team_leaders[week].items():
+                    if tl_name in team_data_for_week:
+                        # Calculate team bonus (all fundraisers in this week are considered team members)
+                        team_bonus_info = self.calculate_team_leader_bonus(team_data_for_week, tl_working_days)
+                        milestone_info = self.calculate_team_leader_milestones(len(team_data_for_week))
+
+                        # Debug: check team bonus structure
+                        if not team_bonus_info or 'bracket' not in team_bonus_info:
+                            print(f"Warning: Invalid team_bonus_info for {tl_name} in {week}: {team_bonus_info}")
+
+                        weekly_team_leader_bonuses[week][tl_name] = {
+                            "team_bonus": team_bonus_info,
+                            "milestones": milestone_info
+                        }
+
+        # Create output dataframe with subtotals and payment info
         final_rows = []
-        
+
         # Process data grouped by KW and Fundraiser
         for kw_num in sorted(df_sorted['KW_num'].dropna().unique()):
             if kw_num == 0:
                 continue
-                
+
             # Fix calendar week formatting for weeks 1-12
             if kw_num <= 12:
                 kw_str = f"KW{int(kw_num)}"
@@ -460,22 +875,22 @@ class CSVFormatterApp:
             else:
                 kw_str = f"{int(kw_num)}/2025"
                 kw_data = df_sorted[df_sorted['Calendar week'] == kw_str]
-            
+
             for fundraiser_name in sorted(kw_data['Fundraiser Name'].dropna().unique()):
                 fundraiser_data = kw_data[kw_data['Fundraiser Name'] == fundraiser_name]
-                
+
                 # Add all individual entries
                 for i, (_, row) in enumerate(fundraiser_data.iterrows()):
                     row_dict = row[required_columns].to_dict()
                     row_dict['bonus_status'] = ''
                     final_rows.append(row_dict)
-                
+
                 # Add subtotal row
                 # Exclude cancelled donors from total points calculation
                 non_cancelled_data = fundraiser_data[fundraiser_data['status_agency'] != 'cancellation']
                 total_points = non_cancelled_data['points'].sum()
                 bonus_status = fundraiser_data['bonus_status'].iloc[0]
-                
+
                 subtotal_row = {
                     'Fundraiser ID': '',
                     'Fundraiser Name': '',
@@ -489,6 +904,95 @@ class CSVFormatterApp:
                     'bonus_status': bonus_status
                 }
                 final_rows.append(subtotal_row)
+
+                # Add payment info for this fundraiser if we have weekly data
+                # Use the original calendar week from the data, not kw_str
+                original_week = fundraiser_data['Calendar week'].iloc[0]
+                if original_week in weekly_fundraiser_payments and fundraiser_name in weekly_fundraiser_payments[original_week]:
+                    payment_info = weekly_fundraiser_payments[original_week][fundraiser_name]
+
+                    # Debug: check if payment_info has the expected structure
+                    if 'payout' in payment_info and payment_info['payout']:
+                        payout_data = payment_info['payout']
+                        payout_row = {
+                            'Fundraiser ID': '',
+                            'Fundraiser Name': '',
+                            'Calendar week': '',
+                            'Public RefID': f"Payout ({payout_data.get('bracket', 'unknown')} avg)",
+                            'Age': '',
+                            'Interval': f"{payment_info.get('working_days', 0)} days",
+                            'Amount Yearly': f"€{payout_data.get('payout', 0):.2f}",
+                            'status_agency': f"Rate: €{payout_data.get('rate', 0)}",
+                            'points': f"Avg: {payout_data.get('daily_average', 0):.2f}",
+                            'bonus_status': ''
+                        }
+                        final_rows.append(payout_row)
+                    else:
+                        print(f"Warning: Invalid payment_info structure for {fundraiser_name} in {original_week}: {payment_info}")
+
+        # Add weekly team leader bonus summary at the end
+        if weekly_team_leader_bonuses:
+            final_rows.append({col: '' for col in required_columns})  # Empty separator row
+
+            final_rows.append({
+                'Fundraiser ID': '',
+                'Fundraiser Name': 'TEAM LEADER BONUSES (BY WEEK)',
+                'Calendar week': '',
+                'Public RefID': '',
+                'Age': '',
+                'Interval': '',
+                'Amount Yearly': '',
+                'status_agency': '',
+                'points': '',
+                'bonus_status': ''
+            })
+
+            for week in sorted(weekly_team_leader_bonuses.keys()):
+                # Week header
+                final_rows.append({
+                    'Fundraiser ID': '',
+                    'Fundraiser Name': f"--- {week} ---",
+                    'Calendar week': '',
+                    'Public RefID': '',
+                    'Age': '',
+                    'Interval': '',
+                    'Amount Yearly': '',
+                    'status_agency': '',
+                    'points': '',
+                    'bonus_status': ''
+                })
+
+                for tl_name, bonus_info in weekly_team_leader_bonuses[week].items():
+                    team_bonus = bonus_info['team_bonus']
+                    milestones = bonus_info['milestones']
+
+                    # Team performance bonus
+                    final_rows.append({
+                        'Fundraiser ID': '',
+                        'Fundraiser Name': tl_name,
+                        'Calendar week': 'Team Bonus',
+                        'Public RefID': f"Team avg: {team_bonus.get('team_average', 0):.2f}",
+                        'Age': f"{team_bonus.get('team_size', 0)} persons",
+                        'Interval': f"€{team_bonus.get('rate', 0)}/point",
+                        'Amount Yearly': f"€{team_bonus.get('bonus', 0):.2f}",
+                        'status_agency': team_bonus.get('bracket', 'unknown'),
+                        'points': f"{team_bonus.get('team_points', 0):.1f} pts",
+                        'bonus_status': ''
+                    })
+
+                    # Milestone bonuses (potential)
+                    final_rows.append({
+                        'Fundraiser ID': '',
+                        'Fundraiser Name': '',
+                        'Calendar week': 'Milestones',
+                        'Public RefID': f"Max potential: €{milestones.get('total_possible', 0)}",
+                        'Age': milestones.get('team_size_bracket', 'unknown'),
+                        'Interval': f"Coach: €{milestones.get('communication_coach', 0)}",
+                        'Amount Yearly': f"Office: €{milestones.get('communication_office', 0)}",
+                        'status_agency': f"External: €{milestones.get('external_presence', 0)}",
+                        'points': f"Material: €{milestones.get('material_responsibility', 0)}",
+                        'bonus_status': ''
+                    })
         
         # Create final dataframe
         final_df = pd.DataFrame(final_rows)
