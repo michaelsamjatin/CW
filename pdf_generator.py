@@ -197,9 +197,13 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir, payment_info=None, 
                                  amounts.iloc[i], status_cell, points.iloc[i]])
 
             # Calculate totals efficiently
-            total_points = valid_rows['points'].fillna(0).sum()
+            # For bonus eligibility: include all donors (including cancelled)
             total_count = len(valid_rows)
             approved_count = (valid_rows['status_agency'].str.lower() == 'approved').sum()
+
+            # For total points and payout: exclude cancelled donors
+            non_cancelled_rows = valid_rows[valid_rows['status_agency'].str.lower() != 'cancelled']
+            total_points = non_cancelled_rows['points'].fillna(0).sum()
 
         # Create table with properly balanced column widths (wider Status column)
         data_table = Table(table_data, colWidths=[2.5*cm, 1.4*cm, 2.0*cm, 2.8*cm, 2.3*cm, 1.6*cm])
@@ -234,25 +238,68 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir, payment_info=None, 
         points_total_str = str(total_points).replace('.', ',')
         bonus_granted = "Ja" if approved_count / total_count >= 0.7 else "Nein"
 
-        # Calculate payout for this week's points
-        # We need to get working days - for now we'll use a default approach
-        # In the full implementation, this would come from the payment_info data
-        working_days = 5  # Default assumption
+        # Try to get actual payout data from payment_info for this week
         week_payout = 0
-        if total_points > 0:
-            # Calculate daily average and determine payout
-            daily_avg = total_points / working_days
-            if daily_avg < 2:
-                rate = 3.95
-            elif daily_avg < 3:
-                rate = 10
-            elif daily_avg < 5:
-                rate = 15
-            elif daily_avg < 7:
-                rate = 20
-            else:
-                rate = 30
-            week_payout = total_points * rate
+        rate = 0
+        actual_working_days = 5  # Default assumption
+
+        # Look for payment info for this specific week
+        week_payment_found = False
+        if payment_info is not None and not payment_info.empty:
+            # Try to find payment data for this week by looking at the context
+            # Since payment_info follows the fundraiser data, we can use it
+            for _, payment_row in payment_info.iterrows():
+                if pd.notna(payment_row['Amount Yearly']):
+                    try:
+                        payout_amount_str = str(payment_row['Amount Yearly']).replace('€', '')
+                        potential_payout = float(payout_amount_str)
+
+                        # Extract working days if available
+                        if pd.notna(payment_row['Interval']):
+                            days_text = str(payment_row['Interval'])
+                            if 'days' in days_text:
+                                days_match = re.search(r'(\d+)\s*days', days_text)
+                                if days_match:
+                                    actual_working_days = int(days_match.group(1))
+
+                        # Extract rate if available
+                        if pd.notna(payment_row['status_agency']):
+                            rate_text = str(payment_row['status_agency'])
+                            if 'Rate:' in rate_text:
+                                rate_match = re.search(r'Rate:\s*€(\d+(?:\.\d+)?)', rate_text)
+                                if rate_match:
+                                    rate = float(rate_match.group(1))
+
+                        # Only use the payout if bonus is granted
+                        if total_count > 0 and approved_count / total_count >= 0.7:
+                            week_payout = potential_payout
+                        else:
+                            week_payout = 0
+                            rate = 0
+
+                        week_payment_found = True
+                        break
+                    except:
+                        pass
+
+        # If no payment info found, calculate manually
+        if not week_payment_found:
+            working_days = actual_working_days
+            # Only calculate payout if bonus is granted
+            if total_points > 0 and approved_count / total_count >= 0.7:
+                # Calculate daily average and determine payout
+                daily_avg = total_points / working_days
+                if daily_avg < 2:
+                    rate = 3.95
+                elif daily_avg < 3:
+                    rate = 10
+                elif daily_avg < 5:
+                    rate = 15
+                elif daily_avg < 7:
+                    rate = 20
+                else:
+                    rate = 30
+                week_payout = total_points * rate
 
         payout_str = f"€{week_payout:.2f}"
 
@@ -291,7 +338,7 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir, payment_info=None, 
         content.append(Spacer(1, 20))
 
         # Title
-        content.append(Paragraph("Team Leader Bonuses", title_style))
+        content.append(Paragraph("Teamleiter Boni", title_style))
 
         # Info fields table
         tl_info_data = [
@@ -330,33 +377,54 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir, payment_info=None, 
             # Team bonus data
             if str(bonus_row['Calendar week']) == 'Team Bonus':
                 tl_name = str(bonus_row['Fundraiser Name'])
-                team_avg = str(bonus_row['Public RefID']).replace('Team avg: ', '')
-                team_size = str(bonus_row['Age'])
+                team_avg = str(bonus_row['Public RefID']).replace('Team Ø: ', '').replace('Team avg: ', '')
+                team_members = str(bonus_row['Age'])
                 rate = str(bonus_row['Interval'])
                 bonus_amount = str(bonus_row['Amount Yearly'])
                 bracket = str(bonus_row['status_agency'])
-                team_points = str(bonus_row['points']).replace(' pts', '')
+                team_points = str(bonus_row['points']).replace('Gesamt: ', '').replace(' Pkt', '').replace(' pts', '')
 
-                tl_data_rows.append([current_week or 'Unknown', team_avg, team_size,
-                                   bracket, rate, bonus_amount])
+                tl_data_rows.append([current_week or 'Unbekannt', team_avg, team_members,
+                                   bracket, rate, bonus_amount, team_points])
 
-            elif str(bonus_row['Calendar week']) == 'Milestones':
-                max_potential = str(bonus_row['Public RefID']).replace('Max potential: ', '')
+            elif str(bonus_row['Calendar week']) in ['Milestones', 'Meilensteine']:
+                max_potential = str(bonus_row['Public RefID']).replace('Max möglich: ', '').replace('Max potential: ', '')
                 team_size_bracket = str(bonus_row['Age'])
                 coach_bonus = str(bonus_row['Interval']).replace('Coach: ', '')
-                office_bonus = str(bonus_row['Amount Yearly']).replace('Office: ', '')
-                external_bonus = str(bonus_row['status_agency']).replace('External: ', '')
+                office_bonus = str(bonus_row['Amount Yearly']).replace('Büro: ', '').replace('Office: ', '')
+                external_bonus = str(bonus_row['status_agency']).replace('Extern: ', '').replace('External: ', '')
                 material_bonus = str(bonus_row['points']).replace('Material: ', '')
 
-                milestone_data_rows.append([current_week or 'Unknown', team_size_bracket,
+                milestone_data_rows.append([current_week or 'Unbekannt', team_size_bracket,
                                           coach_bonus, office_bonus, external_bonus,
                                           material_bonus, max_potential])
 
         # Team Performance Bonus Table
         if tl_data_rows:
-            tl_table_data = [['Week', 'Team Avg/Day', 'Team Size', 'Level', 'Rate', 'Bonus']] + tl_data_rows
+            # Process rows to add proper text wrapping for team members
+            processed_tl_rows = []
+            for row in tl_data_rows:
+                processed_row = list(row)
+                # Wrap the team members text (index 2) in a Paragraph for better text flow
+                if len(processed_row) > 2:
+                    team_members_text = str(processed_row[2])
+                    # Create a Paragraph with smaller font for the team members
+                    team_members_paragraph = Paragraph(team_members_text, ParagraphStyle(
+                        'TeamMembers',
+                        parent=styles['Normal'],
+                        fontSize=7,
+                        fontName='Helvetica',
+                        alignment=TA_LEFT,
+                        leftIndent=2,
+                        rightIndent=2,
+                        wordWrap='CJK'
+                    ))
+                    processed_row[2] = team_members_paragraph
+                processed_tl_rows.append(processed_row)
 
-            tl_table = Table(tl_table_data, colWidths=[3.0*cm, 3.0*cm, 3.0*cm, 3.0*cm, 3.0*cm, 3.0*cm])
+            tl_table_data = [['Woche', 'Team Ø/Tag', 'Teammitglieder', 'Level', 'Rate', 'Bonus', 'Gesamt Pkt']] + processed_tl_rows
+
+            tl_table = Table(tl_table_data, colWidths=[1.8*cm, 1.8*cm, 5.5*cm, 1.8*cm, 1.8*cm, 1.8*cm, 1.8*cm])
             tl_table.setStyle(TableStyle([
                 # Header row
                 ('BACKGROUND', (0, 0), (-1, 0), colors.white),
@@ -369,11 +437,11 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir, payment_info=None, 
                 ('BACKGROUND', (0, 1), (-1, -1), colors.white),
                 ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
                 ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 9),
-                ('TOPPADDING', (0, 1), (-1, -1), 8),
-                ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
-                ('LEFTPADDING', (0, 0), (-1, -1), 8),
-                ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('TOPPADDING', (0, 1), (-1, -1), 6),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+                ('LEFTPADDING', (0, 0), (-1, -1), 4),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 4),
 
                 # Grid
                 ('GRID', (0, 0), (-1, -1), 1, colors.black),
@@ -516,14 +584,42 @@ def generate_pdf_for_fundraiser(fundraiser_data, output_dir, payment_info=None, 
     total_regular_payout = 0
     total_tl_bonus = 0
 
-    # Sum up regular payouts
-    if payment_info is not None and not payment_info.empty:
-        for _, payment_row in payment_info.iterrows():
-            payout_amount_str = str(payment_row['Amount Yearly']).replace('€', '')
-            try:
-                total_regular_payout += float(payout_amount_str)
-            except:
-                pass
+    # Sum up regular payouts - recalculate for each week based on bonus eligibility
+    for week, week_data in weeks_data.items():
+        if pd.notna(week) and not week_data.empty:
+            # Filter valid rows for this week
+            valid_rows = week_data[week_data['Public RefID'].notna()]
+
+            if not valid_rows.empty:
+                # Calculate bonus eligibility for this week
+                total_count = len(valid_rows)
+                approved_count = (valid_rows['status_agency'].str.lower() == 'approved').sum()
+
+                # Only include payout if bonus is granted (70% approval rate)
+                if total_count > 0 and approved_count / total_count >= 0.7:
+                    # Calculate total points for this week (excluding cancelled donors)
+                    non_cancelled_rows = valid_rows[valid_rows['status_agency'].str.lower() != 'cancelled']
+                    week_points = non_cancelled_rows['points'].fillna(0).sum()
+
+                    if week_points > 0:
+                        # Calculate payout based on points and rate
+                        working_days = 6  # Default assumption
+                        daily_avg = week_points / working_days
+
+                        # Determine rate based on daily average
+                        if daily_avg < 2:
+                            rate = 3.95
+                        elif daily_avg < 3:
+                            rate = 10
+                        elif daily_avg < 5:
+                            rate = 15
+                        elif daily_avg < 7:
+                            rate = 20
+                        else:
+                            rate = 30
+
+                        week_payout = week_points * rate
+                        total_regular_payout += week_payout
 
     # Sum up TL bonuses
     if tl_bonus_info is not None and not tl_bonus_info.empty:
@@ -618,7 +714,7 @@ def generate_all_pdf_files(csv_file_path, output_dir=None):
         (df['Public RefID'] != '') &
         (~df['Public RefID'].astype(str).str.contains('Total:', na=False)) &
         (~df['Public RefID'].astype(str).str.contains('Payout', na=False))
-    ]
+    ].copy()
 
     # Payment information
     payment_data = df[

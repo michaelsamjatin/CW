@@ -97,7 +97,7 @@ def calculate_bonus_eligibility(fundraiser_data):
     """
     # Filter for cancellation and active/billable status only
     relevant_donors = fundraiser_data[
-        fundraiser_data['status_agency'].isin(['cancellation', 'active', 'billable', 'approved', 'conditionally approved'])
+        fundraiser_data['status_agency'].isin(['cancelled', 'active', 'billable', 'approved', 'conditionally approved', 'failed'])
     ]
     
     total_donors = len(relevant_donors)
@@ -209,7 +209,7 @@ def format_csv(input_file, output_file, generate_pdf=True, pdf_output_dir=None):
             
             # Add subtotal row for this fundraiser
             # Exclude cancelled donors from total points calculation
-            non_cancelled_data = fundraiser_data[fundraiser_data['status_agency'] != 'cancellation']
+            non_cancelled_data = fundraiser_data[fundraiser_data['status_agency'] != 'cancelled']
             total_points = non_cancelled_data['points'].sum()
             bonus_status = fundraiser_data['bonus_status'].iloc[0]
             

@@ -104,36 +104,40 @@ class CSVFormatterApp:
     def apply_theme(self):
         """Apply current theme colors to the app."""
         if self.dark_mode.get():
-            # Dark mode colors
+            # Dark mode colors - maximum contrast
             self.colors = {
-                'bg': '#2b2b2b',
+                'bg': '#1a1a1a',
                 'fg': '#ffffff',
-                'bg_secondary': '#3c3c3c',
-                'fg_secondary': '#cccccc',
-                'accent': '#4a9eff',
+                'bg_secondary': '#2d2d2d',
+                'fg_secondary': '#e0e0e0',
+                'accent': '#5aa3ff',
                 'success': '#4caf50',
                 'warning': '#ff9800',
                 'error': '#f44336',
-                'button': '#404040',
-                'button_hover': '#505050',
-                'entry': '#404040',
-                'drop_zone': '#353535'
+                'button': '#333333',
+                'button_hover': '#555555',
+                'button_text': '#ffffff',
+                'entry': '#333333',
+                'entry_text': '#ffffff',
+                'drop_zone': '#262626'
             }
         else:
-            # Light mode colors (original)
+            # Light mode colors - maximum contrast
             self.colors = {
-                'bg': '#f0f0f0',
-                'fg': '#2c3e50',
-                'bg_secondary': '#ecf0f1',
-                'fg_secondary': '#7f8c8d',
-                'accent': '#3498db',
-                'success': '#27ae60',
-                'warning': '#f39c12',
-                'error': '#e74c3c',
-                'button': '#95a5a6',
-                'button_hover': '#34495e',
-                'entry': 'white',
-                'drop_zone': '#ecf0f1'
+                'bg': '#ffffff',
+                'fg': '#000000',
+                'bg_secondary': '#f5f5f5',
+                'fg_secondary': '#333333',
+                'accent': '#1976d2',
+                'success': '#2e7d32',
+                'warning': '#e65100',
+                'error': '#d32f2f',
+                'button': '#2c2c2c',
+                'button_hover': '#1a1a1a',
+                'button_text': '#ffffff',
+                'entry': '#ffffff',
+                'entry_text': '#000000',
+                'drop_zone': '#fafafa'
             }
 
         self.root.configure(bg=self.colors['bg'])
@@ -173,9 +177,19 @@ class CSVFormatterApp:
         # Update buttons
         if hasattr(self, 'process_btn'):
             if self.process_btn['state'] == 'normal':
-                self.process_btn.configure(bg=self.colors['success'])
+                self.process_btn.configure(bg=self.colors['success'], fg=self.colors['button_text'])
             else:
-                self.process_btn.configure(bg=self.colors['button'])
+                self.process_btn.configure(bg=self.colors['button'], fg=self.colors['button_text'])
+
+        # Update other buttons
+        if hasattr(self, 'browse_output_btn'):
+            self.browse_output_btn.configure(bg=self.colors['button'], fg=self.colors['button_text'])
+        if hasattr(self, 'clear_output_btn'):
+            self.clear_output_btn.configure(bg=self.colors['warning'], fg=self.colors['button_text'])
+
+        # Update entries
+        if hasattr(self, 'output_entry'):
+            self.output_entry.configure(bg=self.colors['entry'], fg=self.colors['entry_text'])
 
     def setup_ui(self):
         # Dark mode toggle
@@ -243,12 +257,12 @@ class CSVFormatterApp:
 
         self.output_entry = tk.Entry(self.output_dir_frame, textvariable=self.output_dir_var,
                                     font=("Helvetica", 10), width=40,
-                                    bg=self.colors['entry'], fg=self.colors['fg'])
+                                    bg=self.colors['entry'], fg=self.colors['entry_text'])
         self.output_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
 
         self.browse_output_btn = tk.Button(self.output_dir_frame, text="Browse",
                                           font=("Helvetica", 10),
-                                          bg=self.colors['button'], fg="white",
+                                          bg=self.colors['button'], fg=self.colors['button_text'],
                                           padx=15, pady=5,
                                           command=self.browse_output_dir,
                                           cursor="hand2")
@@ -257,7 +271,7 @@ class CSVFormatterApp:
         # Clear button for output directory
         self.clear_output_btn = tk.Button(self.output_dir_frame, text="Default",
                                          font=("Helvetica", 10),
-                                         bg=self.colors['warning'], fg="white",
+                                         bg=self.colors['warning'], fg=self.colors['button_text'],
                                          padx=15, pady=5,
                                          command=self.reset_output_dir,
                                          cursor="hand2")
@@ -277,7 +291,7 @@ class CSVFormatterApp:
         # Process button
         self.process_btn = tk.Button(self.root, text="Process CSV",
                                     font=("Helvetica", 14, "bold"),
-                                    bg=self.colors['button'], fg="white",
+                                    bg=self.colors['button'], fg=self.colors['button_text'],
                                     padx=30, pady=10,
                                     command=self.process_file,
                                     cursor="hand2",
@@ -558,11 +572,11 @@ class CSVFormatterApp:
 
                 # Working days entry
                 weekly_working_days[week][fundraiser] = tk.StringVar()
-                weekly_working_days[week][fundraiser].set("5")  # Default to 5 days
+                weekly_working_days[week][fundraiser].set("6")  # Default to 6 days
                 days_entry = tk.Entry(tl_row_frame,
                                     textvariable=weekly_working_days[week][fundraiser],
                                     font=("Helvetica", 9), width=8,
-                                    bg=self.colors['bg'], fg=self.colors['fg'])
+                                    bg=self.colors['entry'], fg=self.colors['entry_text'])
                 days_entry.pack(side="right", padx=5)
 
                 tk.Label(tl_row_frame, text="Days:", font=("Helvetica", 9),
@@ -667,26 +681,36 @@ class CSVFormatterApp:
 
         return result["confirmed"]
 
-    def calculate_regular_fundraiser_payout(self, points, working_days):
+    def calculate_regular_fundraiser_payout(self, points, working_days, bonus_eligible=True):
         """
         Calculate payout for regular fundraiser based on points and working days.
 
         Args:
             points: Total points earned
             working_days: Number of days worked
+            bonus_eligible: Whether the fundraiser is eligible for bonus (default: True)
 
         Returns:
             Dictionary with payout details
         """
         if working_days <= 0:
-            return {"daily_average": 0, "payout": 0, "rate": "N/A"}
+            return {"daily_average": 0, "payout": 0, "rate": 0, "bracket": "keine Arbeitstage"}
 
         daily_average = points / working_days
+
+        # If not eligible for bonus, set payout and rate to zero
+        if not bonus_eligible:
+            return {
+                "daily_average": daily_average,
+                "payout": 0,
+                "rate": 0,
+                "bracket": "nicht gewährt"
+            }
 
         # Payment rates based on daily average
         if daily_average < 2:
             rate = 3.95
-            bracket = "under 2er"
+            bracket = "unter 2er"
         elif daily_average < 3:
             rate = 10
             bracket = "2er"
@@ -725,13 +749,13 @@ class CSVFormatterApp:
             "bonus": 0,
             "team_average": 0,
             "rate": 0,
-            "bracket": "no bonus",
+            "bracket": "kein Bonus",
             "team_size": len(team_data) if team_data else 0,
             "team_points": 0
         }
 
-        if not team_data or len(team_data) < 2:  # Minimum 2 team members required (TL + 1 member)
-            default_return["bracket"] = "team too small"
+        if not team_data or len(team_data) < 3:  # Minimum 3 total (TL + 2 team members)
+            default_return["bracket"] = ""
             return default_return
 
         # Calculate team total points (including TL)
@@ -743,40 +767,24 @@ class CSVFormatterApp:
             team_working_days += data["working_days"]
 
         if team_working_days <= 0:
-            default_return["bracket"] = "no working days"
+            default_return["bracket"] = "keine Arbeitstage"
             return default_return
 
         team_average = team_points / team_working_days
 
-        # Bonus rates based on team average - adjusted for smaller teams
-        if len(team_data) < 3:
-            # Reduced rates for small teams (TL + 1 member)
-            if team_average < 2:
-                rate = 0.25
-                bracket = "small team under 2er"
-            elif team_average < 3:
-                rate = 0.50
-                bracket = "small team 2er"
-            elif team_average < 5:
-                rate = 1.25
-                bracket = "small team 3er"
-            else:
-                rate = 2.25
-                bracket = "small team 5er+"
+        # Bonus rates based on team average
+        if team_average < 2:
+            rate = 0.50
+            bracket = "unter 2er"
+        elif team_average < 3:
+            rate = 1.00
+            bracket = "2er"
+        elif team_average < 5:
+            rate = 2.50
+            bracket = "3er"
         else:
-            # Full rates for larger teams (3+ members)
-            if team_average < 2:
-                rate = 0.50
-                bracket = "under 2er"
-            elif team_average < 3:
-                rate = 1.00
-                bracket = "2er"
-            elif team_average < 5:
-                rate = 2.50
-                bracket = "3er"
-            else:
-                rate = 4.50
-                bracket = "5er+"
+            rate = 4.50
+            bracket = "5er+"
 
         bonus = team_points * rate
 
@@ -875,7 +883,7 @@ class CSVFormatterApp:
     def calculate_bonus_eligibility(self, fundraiser_data):
         # Filter for cancellation and active/billable status only
         relevant_donors = fundraiser_data[
-            fundraiser_data['status_agency'].isin(['cancellation', 'active', 'billable', 'approved', 'conditionally approved'])
+            fundraiser_data['status_agency'].isin(['cancelled', 'active', 'billable', 'approved', 'conditionally approved', 'failed'])
         ]
         
         total_donors = len(relevant_donors)
@@ -1033,12 +1041,17 @@ class CSVFormatterApp:
             for fundraiser_name in week_data['Fundraiser Name'].dropna().unique():
                 if pd.notna(fundraiser_name) and fundraiser_name in self.fundraiser_working_days[week]:
                     fundraiser_week_data = week_data[week_data['Fundraiser Name'] == fundraiser_name]
-                    non_cancelled_data = fundraiser_week_data[fundraiser_week_data['status_agency'] != 'cancellation']
+                    non_cancelled_data = fundraiser_week_data[fundraiser_week_data['status_agency'] != 'cancelled']
                     week_points = non_cancelled_data['points'].sum()
                     working_days = self.fundraiser_working_days[week][fundraiser_name]
 
+                    # Check bonus eligibility for this fundraiser for this specific week
+                    fundraiser_data = week_data[week_data['Fundraiser Name'] == fundraiser_name]
+                    bonus_status = self.calculate_bonus_eligibility(fundraiser_data)
+                    is_eligible = bonus_status == 'eligible'
+
                     # Calculate regular payout
-                    payout_info = self.calculate_regular_fundraiser_payout(week_points, working_days)
+                    payout_info = self.calculate_regular_fundraiser_payout(week_points, working_days, is_eligible)
 
                     # Debug: check payout_info structure
                     if not payout_info or 'bracket' not in payout_info:
@@ -1087,9 +1100,13 @@ class CSVFormatterApp:
 
                         print(f"TL {tl_name} team in {week}: {list(tl_team_data.keys())} (size: {len(tl_team_data)})")
 
+                        # Get team member names for this TL
+                        team_member_names = list(tl_team_data.keys())
+
                         weekly_team_leader_bonuses[week][tl_name] = {
                             "team_bonus": team_bonus_info,
-                            "milestones": milestone_info
+                            "milestones": milestone_info,
+                            "team_members": team_member_names
                         }
 
         # Create output dataframe with subtotals and payment info
@@ -1123,7 +1140,7 @@ class CSVFormatterApp:
 
                 # Add subtotal row
                 # Exclude cancelled donors from total points calculation
-                non_cancelled_data = fundraiser_data[fundraiser_data['status_agency'] != 'cancellation']
+                non_cancelled_data = fundraiser_data[fundraiser_data['status_agency'] != 'cancelled']
                 total_points = non_cancelled_data['points'].sum()
                 bonus_status = fundraiser_data['bonus_status'].iloc[0]
 
@@ -1175,7 +1192,7 @@ class CSVFormatterApp:
 
             final_rows.append({
                 'Fundraiser ID': '',
-                'Fundraiser Name': 'TEAM LEADER BONUSES (BY WEEK)',
+                'Fundraiser Name': 'TEAMLEITER BONI (NACH WOCHE)',
                 'Calendar week': '',
                 'Public RefID': '',
                 'Age': '',
@@ -1204,18 +1221,24 @@ class CSVFormatterApp:
                 for tl_name, bonus_info in weekly_team_leader_bonuses[week].items():
                     team_bonus = bonus_info['team_bonus']
                     milestones = bonus_info['milestones']
+                    team_members = bonus_info.get('team_members', [])
+
+                    # Create team member names string (limit length for CSV)
+                    team_names_str = ", ".join(team_members[:3])  # Show max 3 names
+                    if len(team_members) > 3:
+                        team_names_str += f" (+{len(team_members)-3} weitere)"
 
                     # Team performance bonus
                     final_rows.append({
                         'Fundraiser ID': '',
                         'Fundraiser Name': tl_name,
                         'Calendar week': 'Team Bonus',
-                        'Public RefID': f"Team avg: {team_bonus.get('team_average', 0):.2f}",
-                        'Age': f"{team_bonus.get('team_size', 0)} persons",
-                        'Interval': f"€{team_bonus.get('rate', 0)}/point",
+                        'Public RefID': f"Team Ø: {team_bonus.get('team_average', 0):.2f}",
+                        'Age': team_names_str,
+                        'Interval': f"€{team_bonus.get('rate', 0)}/Punkt",
                         'Amount Yearly': f"€{team_bonus.get('bonus', 0):.2f}",
-                        'status_agency': team_bonus.get('bracket', 'unknown'),
-                        'points': f"{team_bonus.get('team_points', 0):.1f} pts",
+                        'status_agency': team_bonus.get('bracket', 'unbekannt'),
+                        'points': f"Gesamt: {team_bonus.get('team_points', 0):.1f} Pkt",
                         'bonus_status': ''
                     })
 
@@ -1223,12 +1246,12 @@ class CSVFormatterApp:
                     final_rows.append({
                         'Fundraiser ID': '',
                         'Fundraiser Name': '',
-                        'Calendar week': 'Milestones',
-                        'Public RefID': f"Max potential: €{milestones.get('total_possible', 0)}",
-                        'Age': milestones.get('team_size_bracket', 'unknown'),
+                        'Calendar week': 'Meilensteine',
+                        'Public RefID': f"Max möglich: €{milestones.get('total_possible', 0)}",
+                        'Age': milestones.get('team_size_bracket', 'unbekannt'),
                         'Interval': f"Coach: €{milestones.get('communication_coach', 0)}",
-                        'Amount Yearly': f"Office: €{milestones.get('communication_office', 0)}",
-                        'status_agency': f"External: €{milestones.get('external_presence', 0)}",
+                        'Amount Yearly': f"Büro: €{milestones.get('communication_office', 0)}",
+                        'status_agency': f"Extern: €{milestones.get('external_presence', 0)}",
                         'points': f"Material: €{milestones.get('material_responsibility', 0)}",
                         'bonus_status': ''
                     })
