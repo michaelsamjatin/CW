@@ -879,7 +879,73 @@ class CSVFormatterApp:
             base_points += 1
         
         return base_points
-    
+
+    def calculate_points_vectorized(self, age_series, interval_series, amount_series):
+        """
+        Vectorized version of calculate_points for better performance.
+        """
+        # Convert to numpy arrays for faster processing
+        ages = pd.to_numeric(age_series, errors='coerce').fillna(0).astype(int)
+        amounts = pd.to_numeric(amount_series, errors='coerce').fillna(0)
+        intervals = interval_series.fillna('').astype(str).str.lower()
+
+        # Initialize points array
+        points = np.zeros(len(ages))
+
+        # Age < 25: 0.5 points
+        mask_young = ages < 25
+        points[mask_young] = 0.5
+
+        # Age 25-29: 0.5 for monthly, 1.0 for others
+        mask_25_29 = (ages >= 25) & (ages < 30)
+        points[mask_25_29 & (intervals == 'monthly')] = 0.5
+        points[mask_25_29 & (intervals != 'monthly')] = 1.0
+
+        # Age >= 30: calculate based on amount and interval
+        mask_30_plus = ages >= 30
+
+        if mask_30_plus.any():
+            ages_30 = ages[mask_30_plus]
+            amounts_30 = amounts[mask_30_plus]
+            intervals_30 = intervals[mask_30_plus]
+            points_30 = np.zeros(len(ages_30))
+
+            # Amount >= 360
+            mask_360 = amounts_30 >= 360
+            points_30[mask_360 & (intervals_30 == 'yearly')] = 5
+            points_30[mask_360 & intervals_30.str.contains('half', na=False)] = 4
+            points_30[mask_360 & ~(intervals_30 == 'yearly') & ~intervals_30.str.contains('half', na=False)] = 3
+
+            # Amount 240-359
+            mask_240 = (amounts_30 >= 240) & (amounts_30 < 360)
+            points_30[mask_240 & (intervals_30 == 'yearly')] = 4
+            points_30[mask_240 & intervals_30.str.contains('half', na=False)] = 3
+            points_30[mask_240 & ~(intervals_30 == 'yearly') & ~intervals_30.str.contains('half', na=False)] = 2
+
+            # Amount 180-239
+            mask_180 = (amounts_30 >= 180) & (amounts_30 < 240)
+            points_30[mask_180 & (intervals_30 == 'yearly')] = 3
+            points_30[mask_180 & intervals_30.str.contains('half', na=False)] = 2.5
+            points_30[mask_180 & ~(intervals_30 == 'yearly') & ~intervals_30.str.contains('half', na=False)] = 1.5
+
+            # Amount 120-179
+            mask_120 = (amounts_30 >= 120) & (amounts_30 < 180)
+            points_30[mask_120 & (intervals_30 == 'yearly')] = 2
+            points_30[mask_120 & intervals_30.str.contains('half', na=False)] = 1.5
+            points_30[mask_120 & ~(intervals_30 == 'yearly') & ~intervals_30.str.contains('half', na=False)] = 1
+
+            # Amount < 120
+            mask_below_120 = amounts_30 < 120
+            points_30[mask_below_120] = 1
+
+            # Age >= 40 bonus
+            mask_40_plus = ages_30 >= 40
+            points_30[mask_40_plus] += 1
+
+            points[mask_30_plus] = points_30
+
+        return points
+
     def calculate_bonus_eligibility(self, fundraiser_data):
         # Filter for cancellation and active/billable status only
         relevant_donors = fundraiser_data[
@@ -926,16 +992,9 @@ class CSVFormatterApp:
         df_temp['Fundraiser Name'] = df_temp['Fundraiser Name'].ffill()
         df_temp['Calendar week'] = df_temp['Calendar week'].ffill()
 
-        # Group fundraisers by calendar week
-        fundraisers_by_week = {}
-        for _, row in df_temp.iterrows():
-            if pd.notna(row['Fundraiser Name']) and pd.notna(row['Calendar week']):
-                week = row['Calendar week']
-                fundraiser = row['Fundraiser Name']
-
-                if week not in fundraisers_by_week:
-                    fundraisers_by_week[week] = set()
-                fundraisers_by_week[week].add(fundraiser)
+        # Group fundraisers by calendar week using vectorized operations
+        valid_data = df_temp[df_temp['Fundraiser Name'].notna() & df_temp['Calendar week'].notna()]
+        fundraisers_by_week = valid_data.groupby('Calendar week')['Fundraiser Name'].apply(set).to_dict()
 
         # Convert sets to lists for dialog
         for week in fundraisers_by_week:
@@ -993,17 +1052,19 @@ class CSVFormatterApp:
         # Extract calendar week number for sorting
         df['KW_num'] = df['Calendar week'].str.extract(r'(\d+)').fillna(0).astype(int)
         
-        # Calculate points for each donor
-        df['points'] = df.apply(lambda row: self.calculate_points(
-            row['Age'], row['Interval'], row['Amount Yearly']
-        ), axis=1)
+        # Calculate points for each donor using vectorized operations
+        df['points'] = self.calculate_points_vectorized(df['Age'], df['Interval'], df['Amount Yearly'])
         
         # Group by fundraiser to calculate bonus eligibility
         fundraiser_bonus = {}
-        for fundraiser_id in df['Fundraiser ID'].unique():
-            if pd.notna(fundraiser_id):
-                fundraiser_data = df[df['Fundraiser ID'] == fundraiser_id]
-                fundraiser_bonus[fundraiser_id] = self.calculate_bonus_eligibility(fundraiser_data)
+        unique_ids = df['Fundraiser ID'].dropna().unique()
+        print(f"Processing bonus eligibility for {len(unique_ids)} fundraisers...")
+
+        for i, fundraiser_id in enumerate(unique_ids):
+            if i % 10 == 0:  # Update progress every 10 fundraisers
+                print(f"Processing fundraiser {i+1}/{len(unique_ids)}")
+            fundraiser_data = df[df['Fundraiser ID'] == fundraiser_id]
+            fundraiser_bonus[fundraiser_id] = self.calculate_bonus_eligibility(fundraiser_data)
         
         # Add bonus status to dataframe
         df['bonus_status'] = df['Fundraiser ID'].map(fundraiser_bonus)
@@ -1113,9 +1174,14 @@ class CSVFormatterApp:
         final_rows = []
 
         # Process data grouped by KW and Fundraiser
-        for kw_num in sorted(df_sorted['KW_num'].dropna().unique()):
+        unique_weeks = sorted(df_sorted['KW_num'].dropna().unique())
+        print(f"Processing {len(unique_weeks)} calendar weeks...")
+
+        for week_idx, kw_num in enumerate(unique_weeks):
             if kw_num == 0:
                 continue
+
+            print(f"Processing week {week_idx+1}/{len(unique_weeks)}: KW{int(kw_num)}")
 
             # Fix calendar week formatting for weeks 1-12
             if kw_num <= 12:
@@ -1132,9 +1198,9 @@ class CSVFormatterApp:
             for fundraiser_name in sorted(kw_data['Fundraiser Name'].dropna().unique()):
                 fundraiser_data = kw_data[kw_data['Fundraiser Name'] == fundraiser_name]
 
-                # Add all individual entries
-                for i, (_, row) in enumerate(fundraiser_data.iterrows()):
-                    row_dict = row[required_columns].to_dict()
+                # Add all individual entries using vectorized operations
+                fundraiser_dicts = fundraiser_data[required_columns].to_dict('records')
+                for row_dict in fundraiser_dicts:
                     row_dict['bonus_status'] = ''
                     final_rows.append(row_dict)
 
@@ -1274,19 +1340,22 @@ class CSVFormatterApp:
             # Write column headers
             f.write(';'.join(required_columns) + '\n')
             
-            # Write data
-            for _, row in final_df.iterrows():
-                row_values = []
-                for col in required_columns:
-                    value = row[col]
-                    if pd.isna(value) or value == '':
-                        row_values.append('')
-                    else:
-                        # Format numeric values
-                        if col == 'points' and isinstance(value, (int, float)) and not str(value).startswith('Total:'):
-                            row_values.append(str(value).replace('.', ','))
-                        else:
-                            row_values.append(str(value))
+            # Write data using vectorized operations
+            # Pre-process numeric formatting
+            final_df_copy = final_df.copy()
+            for col in required_columns:
+                if col == 'points':
+                    # Format points column
+                    mask = (final_df_copy[col].notna() &
+                           pd.to_numeric(final_df_copy[col], errors='coerce').notna() &
+                           ~final_df_copy[col].astype(str).str.startswith('Total:'))
+                    final_df_copy.loc[mask, col] = final_df_copy.loc[mask, col].astype(str).str.replace('.', ',')
+
+                # Fill NaN and empty values
+                final_df_copy[col] = final_df_copy[col].fillna('').astype(str)
+
+            # Write all rows at once
+            for row_values in final_df_copy[required_columns].values:
                 f.write(';'.join(row_values) + '\n')
         
         # Generate PDF files
